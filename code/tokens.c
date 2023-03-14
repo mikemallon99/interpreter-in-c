@@ -29,5 +29,6 @@ typedef enum token_type {
 
 typedef struct Tokens {
     token_type tokenType;
-    char value;
+    char value[16];
 } token;
+

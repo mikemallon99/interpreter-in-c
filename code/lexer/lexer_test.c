@@ -20,17 +20,16 @@ void test_simple() {
     lexer l = get_lexer(input);
 
     token cur_token;
-    for (int i = 0; i <= sizeof(tests) / sizeof(tests[0]); i++) {
+    for (int i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
         printf("Char #%d\n", i);
-        cur_token = next_token(l);
-        if (cur_token.tokenType == tests[i].tokenType) {
+        cur_token = next_token(&l);
+        if (cur_token.tokenType != tests[i].tokenType) {
             printf("%d != %d\n", cur_token.tokenType, tests[i].tokenType);
         }
-        if (strcmp(cur_token.value, tests[i].value) == 0) {
+        if (strcmp(cur_token.value, tests[i].value) != 0) {
             printf("%s != %s\n", cur_token.value, tests[i].value);
         } else {
             printf("%s == %s\n", cur_token.value, tests[i].value);
-            printf("%d", (int)strlen(cur_token.value));
         }
     }
 }
@@ -55,9 +54,11 @@ void test_code() {
         {.tokenType = IDENT, .value = "ten"},
         {.tokenType = ASSIGN, .value = "="},
         {.tokenType = INT, .value = "10"},
+        {.tokenType = SEMICOLON, .value = ";"},
         {.tokenType = LET, .value = "let"},
         {.tokenType = IDENT, .value = "add"},
         {.tokenType = ASSIGN, .value = "="},
+        {.tokenType = FUNCTION, .value = "fn"},
         {.tokenType = LPAREN, .value = "("},
         {.tokenType = IDENT, .value = "x"},
         {.tokenType = COMMA, .value = ","},
@@ -87,13 +88,13 @@ void test_code() {
     lexer l = get_lexer(input);
 
     token cur_token;
-    for (int i = 0; i <= sizeof(tests) / sizeof(tests[0]); i++) {
+    for (int i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
         printf("Char #%d\n", i);
-        cur_token = next_token(l);
-        if (cur_token.tokenType == tests[i].tokenType) {
+        cur_token = next_token(&l);
+        if (cur_token.tokenType != tests[i].tokenType) {
             printf("%d != %d\n", cur_token.tokenType, tests[i].tokenType);
         }
-        if (strcmp(cur_token.value, tests[i].value) == 0) {
+        if (strcmp(cur_token.value, tests[i].value) != 0) {
             printf("%s != %s\n", cur_token.value, tests[i].value);
         } else {
             printf("%s == %s\n", cur_token.value, tests[i].value);
@@ -105,7 +106,7 @@ int main() {
     printf("Test Simple:\n");
     test_simple();
 
-    // printf("Test Code:\n");
-    // test_code();
+    printf("Test Code:\n");
+    test_code();
     return 0;
 }

@@ -10,6 +10,14 @@ typedef struct Lexers {
     char cur_byte;
 } lexer;
 
+char peek_char(lexer* l) {
+    if (l->read_position >= strlen(l->input_string)) {
+        return 0;
+    } else {
+        return l->input_string[l->read_position];
+    }
+}
+
 void read_char(lexer* l) {
     if (l->read_position >= strlen(l->input_string)) {
         l->cur_byte = 0;
@@ -30,19 +38,11 @@ lexer get_lexer(char* input_string) {
 }
 
 bool is_number(char cur_byte) {
-    if (cur_byte >= '0' && cur_byte <= '9') {
-        return true;
-    } else {
-        return false;
-    }
+    return (cur_byte >= '0' && cur_byte <= '9');
 }
 
 bool is_letter(char cur_byte) {
-    if ((cur_byte >= 'a' && cur_byte <= 'z') || (cur_byte >= 'A' && cur_byte <= 'Z') || cur_byte == '_') {
-        return true;
-    } else {
-        return false;
-    }
+    return ((cur_byte >= 'a' && cur_byte <= 'z') || (cur_byte >= 'A' && cur_byte <= 'Z') || cur_byte == '_');
 }
 
 char* read_identifier(lexer* l) {
@@ -84,9 +84,60 @@ token next_token(lexer* l) {
     // Read token
     switch (l->cur_byte) {
         case '=':
+            if (peek_char(l) == '=') {
+                char_str = calloc(3, 1);
+                char_str[0] = l->cur_byte;
+                read_char(l);
+                char_str[1] = l->cur_byte;
+                t = (token){EQ, char_str};
+            } else {
+                char_str = calloc(2, 1);
+                char_str[0] = l->cur_byte;
+                t = (token){ASSIGN, char_str};
+            }
+            break;
+        case '+':
             char_str = calloc(2, 1);
             char_str[0] = l->cur_byte;
-            t = (token){ASSIGN, char_str};
+            t = (token){PLUS, char_str};
+            break;
+        case '-':
+            char_str = calloc(2, 1);
+            char_str[0] = l->cur_byte;
+            t = (token){MINUS, char_str};
+            break;
+        case '!':
+            if (peek_char(l) == '=') {
+                char_str = calloc(3, 1);
+                char_str[0] = l->cur_byte;
+                read_char(l);
+                char_str[1] = l->cur_byte;
+                t = (token){NOT_EQ, char_str};
+            } else {
+                char_str = calloc(2, 1);
+                char_str[0] = l->cur_byte;
+                t = (token){BANG, char_str};
+            }
+            break;
+        case '*':
+            char_str = calloc(2, 1);
+            char_str[0] = l->cur_byte;
+            t = (token){ASTERISK, char_str};
+            break;
+        case '/':
+            char_str = calloc(2, 1);
+            char_str[0] = l->cur_byte;
+            t = (token){SLASH, char_str};
+            break;
+        case '<':
+            char_str = calloc(2, 1);
+            char_str[0] = l->cur_byte;
+            t = (token){LT, char_str};
+            break;
+        case '>':
+            char_str = calloc(2, 1);
+            char_str[0] = l->cur_byte;
+            t = (token){GT, char_str};
             break;
         case ';':
             char_str = calloc(2, 1);
@@ -108,11 +159,6 @@ token next_token(lexer* l) {
             char_str[0] = l->cur_byte;
             t = (token){COMMA, char_str};
             break;
-        case '+':
-            char_str = calloc(2, 1);
-            char_str[0] = l->cur_byte;
-            t = (token){PLUS, char_str};
-            break;
         case '{':
             char_str = calloc(2, 1);
             char_str[0] = l->cur_byte;
@@ -130,21 +176,13 @@ token next_token(lexer* l) {
             break;
         default:
             if (is_letter(l->cur_byte)) {
+                // Return early since we dont want to advance the next char
                 char* identifier = read_identifier(l);
-                if (strcmp(identifier, "fn") == 0) {
-                    t = (token){FUNCTION, identifier};
-                }
-                else if (strcmp(identifier, "let") == 0) {
-                    t = (token){LET, identifier};
-                }
-                else {
-                    t = (token){IDENT, identifier};
-                }
-                return t;
+                return (token){lookup_ident(identifier), identifier};
             } else if (is_number(l->cur_byte)) {
+                // Return early since we dont want to advance the next char
                 char* identifier = read_int(l);
-                t = (token){INT, identifier};
-                return t;
+                return (token){INT, identifier};
             } else {
                 char_str = calloc(2, 1);
                 char_str[0] = l->cur_byte;

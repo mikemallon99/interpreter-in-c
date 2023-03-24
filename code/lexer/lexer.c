@@ -75,7 +75,7 @@ void skip_whitespace(lexer* l) {
     }
 }
 
-token next_token(lexer* l) {
+token next_lexer_token(lexer* l) {
     token t;
     char* char_str;
 

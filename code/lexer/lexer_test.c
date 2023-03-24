@@ -23,7 +23,7 @@ void test_simple() {
     bool passed = true;
     token cur_token;
     for (int i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
-        cur_token = next_token(&l);
+        cur_token = next_lexer_token(&l);
         if (cur_token.tokenType != tests[i].tokenType) {
             printf("Char #%d\n", i);
             printf("%d != %d\n", cur_token.tokenType, tests[i].tokenType);
@@ -148,7 +148,7 @@ void test_code() {
     token cur_token;
     bool passed = true;
     for (int i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
-        cur_token = next_token(&l);
+        cur_token = next_lexer_token(&l);
         if (cur_token.tokenType != tests[i].tokenType) {
             printf("token #%d\n", i);
             printf("%d != %d\n", cur_token.tokenType, tests[i].tokenType);

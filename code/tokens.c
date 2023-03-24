@@ -1,3 +1,6 @@
+#ifndef _TOKENSC_
+#define _TOKENSC_
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -155,3 +158,5 @@ char* get_token_type_string(token_type t) {
     }
     return token_string;
 }
+
+#endif

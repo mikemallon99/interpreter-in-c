@@ -14,7 +14,7 @@ bool test_let_statement(statement s, char* name) {
         printf("Statement is not a LET token");
         return false;
     }
-    if (data->ident.t.tokenType != IDENT) {
+    if (data->ident.tokenType != IDENT) {
         printf("Identifier is not an IDENT token");
         return false;
     }

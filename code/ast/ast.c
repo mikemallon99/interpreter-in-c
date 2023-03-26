@@ -19,11 +19,6 @@ typedef struct expression {
     void* data;
 } expression;
 
-typedef struct identifier {
-    token t;
-    char* value;
-} identifier;
-
 typedef struct program {
     statement* statements;
     int num_statements;
@@ -34,7 +29,7 @@ typedef struct smt_let_data {
     // LET token
     token t;
     // Var name thats being set
-    identifier ident;
+    token ident;
     // Value the var is being set to
     expression value;
 } smt_let_data;

@@ -6,7 +6,9 @@ typedef struct {
     lexer* l;
     token cur_token;
     token peek_token;
-    char* errors[64];
+    // This needs to be a list of strings
+    char errors[64][256];
+    int num_errors;
 } parser; 
 
 void next_parser_token(parser* p) {
@@ -15,8 +17,8 @@ void next_parser_token(parser* p) {
 }
 
 void peek_error(parser* p, token_type cur_type) {
-    char* err_string = calloc(128, 1);
-    sprintf(err_string, "Expected next token to be %s but got %s instead.", get_token_type_string(cur_type), get_token_type_string(p->peek_token.tokenType));
+    sprintf(p->errors[p->num_errors], "Expected next token to be %s but got %s instead.", get_token_type_string(cur_type), get_token_type_string(p->peek_token.tokenType));
+    p->num_errors++;
 }
 
 bool cur_token_is(parser* p, token_type cur_type) {
@@ -32,13 +34,25 @@ bool expect_peek(parser* p, token_type peek_type) {
         next_parser_token(p);
         return true;
     } else {
+        peek_error(p, peek_type);
         return false;
     }
+}
+
+bool check_parser_errors(parser* p) {
+    if (p->num_errors == 0) return true;
+
+    printf("Parser has %d errors:\n", p->num_errors);
+    for (int i = 0; i < p->num_errors; i++) {
+        printf("Error: %s\n", p->errors[i]);
+    }
+    return false;
 }
 
 parser new_parser(lexer* l) {
     parser p;
     p.l = l;
+    p.num_errors = 0;
 
     // Call this twice to populate cur_token
     next_parser_token(&p);
@@ -92,7 +106,7 @@ program* parse_program(parser* p) {
     statement* cur_stmt;
     statement* prev_stmt;
 
-    // Do first iteration so we can load up the program
+    // Need to do first iteration so we have our "prev_stmt" initialized
     cur_stmt = parse_statement(p);
     if (cur_stmt == NULL) {
         return NULL;
@@ -104,9 +118,15 @@ program* parse_program(parser* p) {
 
     for (token t = p->cur_token; t.tokenType != EOF_T; t = p->cur_token) {
         cur_stmt = parse_statement(p);
+        // Just make the program contintue with the next statement 
+        if (cur_stmt == NULL) {
+            next_parser_token(p);
+            continue;
+        }
         prev_stmt->next = cur_stmt;
         prog->num_statements++;
         prev_stmt = cur_stmt;
+        // Skip over semicolon
         next_parser_token(p);
     }
 

@@ -92,10 +92,30 @@ statement* parse_let_statement(parser* p) {
     return stmt;
 }
 
+statement* parse_return_statement(parser* p) {
+    statement* stmt = calloc(1, sizeof(statement));
+    stmt->type = SMT_RETURN;
+    smt_return_data* data = calloc(1, sizeof(smt_return_data));
+    stmt->data = data;
+    stmt->next = NULL;
+
+    // Return token
+    data->t = p->cur_token;
+    
+    // Skip over the expressions for now
+    while (p->cur_token.tokenType != SEMICOLON) {
+        next_parser_token(p);
+    }
+
+    return stmt;
+}
+
 statement* parse_statement(parser* p) {
     switch (p->cur_token.tokenType) {
         case LET:
             return parse_let_statement(p);
+        case RETURN:
+            return parse_return_statement(p);
         default:
             return NULL;
     }

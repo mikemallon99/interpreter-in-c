@@ -67,8 +67,46 @@ void test_let_statements() {
     test_let_statement((cur_statement = *(cur_statement.next)), "foobar");
 }
 
+void test_return_statements() {
+    char input_string[] = 
+        "return 5;\n"
+        "return 10;\n"
+        "return 993322;\n";
+
+    lexer l = get_lexer(input_string);
+    parser p = new_parser(&l);
+
+    program* pgm = parse_program(&p);
+    assert(check_parser_errors(&p));
+    if (pgm == NULL) {
+        printf("parse_program returned NULL");
+        return;
+    }
+    if (pgm->num_statements != 3) {
+        printf("parse_program did not collect 3 statements. Got %d", pgm->num_statements);
+        return;
+    }
+
+}
+
+void test_program_string() {
+    // Create let statement from raw tokens
+    expression expr_data; 
+    smt_let_data let_data = {{LET, "let"}, {IDENT, "my_var"}, expr_data};
+    statement let_stmt = {SMT_LET, &let_data, NULL};
+    program p;
+    p.statements = &let_stmt;
+    p.num_statements = 1;
+
+    char* prog_string = program_string(&p);
+    printf(prog_string);
+    free(prog_string);
+}
+
 int main() {
     test_let_statements();
     test_bad_let_statements();
+    test_return_statements();
+    test_program_string();
     return 0;
 }

@@ -79,7 +79,7 @@ char* statement_string(statement* s) {
             break;
         case SMT_EXPRESSION:
             expr_data = (smt_expr_data *)s->data;
-            expr_str = expression_string(&return_data->value);
+            expr_str = expression_string(&expr_data->value);
             sprintf(stmt_str, "%s;\n", expr_str);
             free(expr_str);
             break;

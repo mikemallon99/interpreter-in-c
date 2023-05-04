@@ -3,6 +3,7 @@
 
 #include "../lexer/lexer.c"
 #include "statements.c"
+#include "../ast/ast.c"
 #include <stdlib.h>
 
 typedef struct {
@@ -14,23 +15,28 @@ typedef struct {
     int num_errors;
 } parser; 
 
+
 void next_parser_token(parser* p) {
     p->cur_token = p->peek_token;
     p->peek_token = next_lexer_token(p->l);
 }
+
 
 void peek_error(parser* p, token_type cur_type) {
     sprintf(p->errors[p->num_errors], "Expected next token to be %s but got %s instead.", get_token_type_string(cur_type), get_token_type_string(p->peek_token.type));
     p->num_errors++;
 }
 
+
 bool cur_token_is(parser* p, token_type cur_type) {
     return p->cur_token.type == cur_type;
 }
 
+
 bool peek_token_is(parser* p, token_type peek_type) {
     return p->peek_token.type == peek_type;
 }
+
 
 bool expect_peek(parser* p, token_type peek_type) {
     if (peek_token_is(p, peek_type)) {
@@ -52,6 +58,7 @@ bool check_parser_errors(parser* p) {
     return false;
 }
 
+
 parser new_parser(lexer* l) {
     parser p;
     p.l = l;
@@ -63,6 +70,49 @@ parser new_parser(lexer* l) {
 
     return p;
 }
+
+
+expr* parse_literal(parser* p) {
+    expr* ex = malloc(sizeof(expr));
+    ex->type = LITERAL_EXPR;
+    literal lit;
+
+    switch (p->cur_token.type) {
+        case IDENT:
+            lit.type = IDENT_LIT;
+            lit.data.t = p->cur_token;
+            break;
+        case INT:
+            lit.type = INT_LIT;
+            lit.data.i = atoi(p->cur_token.value);
+            break;
+        default:
+            lit.type = NULL_LIT;
+            break;
+    }
+
+    ex->data.lit = lit;
+    return ex;
+}
+
+
+expr* parse_prefix(parser* p) {
+    switch (p->cur_token.type) {
+        // Literals
+        case IDENT:
+        case INT:
+            return parse_literal(p);
+        default:
+            return NULL;
+    }
+}
+
+
+expr* parse_expression(parser* p, precedence prec) {
+    expr* left_expr = parse_prefix(p);
+    return left_expr;
+}
+
 
 stmt parse_let_statement(parser* p) {
     let_stmt let;
@@ -80,8 +130,11 @@ stmt parse_let_statement(parser* p) {
         return new_stmt;
     }
 
-    // Skip over the expressions for now
-    while (p->cur_token.type != SEMICOLON) {
+    next_parser_token(p);
+
+    let.value = parse_expression(p, LOWEST_PR);
+
+    if (peek_token_is(p, SEMICOLON)) {
         next_parser_token(p);
     }
 
@@ -90,13 +143,17 @@ stmt parse_let_statement(parser* p) {
     return new_stmt;
 }
 
+
 stmt parse_return_statement(parser* p) {
     return_stmt ret;
     stmt new_stmt;
     new_stmt.type = NULL_STMT;
     
-    // Skip over the expressions for now
-    while (p->cur_token.type != SEMICOLON) {
+    next_parser_token(p);
+
+    ret.value = parse_expression(p, LOWEST_PR);
+
+    if (peek_token_is(p, SEMICOLON)) {
         next_parser_token(p);
     }
 
@@ -105,18 +162,35 @@ stmt parse_return_statement(parser* p) {
     return new_stmt;
 }
 
+
+stmt parse_expr_stmt(parser* p) {
+    expr_stmt ex;
+    stmt new_stmt;
+    new_stmt.type = NULL_STMT;
+    
+    ex.value = parse_expression(p, LOWEST_PR);
+
+    if (peek_token_is(p, SEMICOLON)) {
+        next_parser_token(p);
+    }
+
+    new_stmt.type = EXPR_STMT;
+    new_stmt.data.expr = ex;
+    return new_stmt;
+}
+
+
 stmt parse_statement(parser* p) {
-    stmt null_stmt;
-    null_stmt.type = NULL_STMT;
     switch (p->cur_token.type) {
         case LET:
             return parse_let_statement(p);
         case RETURN:
             return parse_return_statement(p);
         default:
-            return null_stmt;
+            return parse_expr_stmt(p);
     }
 }
+
 
 stmt_list parse_program(parser* p) {
     stmt_list prog = new_stmt_list();

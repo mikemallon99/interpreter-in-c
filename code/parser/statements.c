@@ -43,21 +43,21 @@ char* statement_string(stmt* s) {
     switch (s->type) {
         case LET_STMT:
             expr_str = expression_string(s->data.let.value);
-            sprintf(stmt_str, "let %s = %s;\n", s->data.let.identifier.value, expr_str);
+            sprintf(stmt_str, "let %s = %s;", s->data.let.identifier.value, expr_str);
             free(expr_str);
             break;
         case RETURN_STMT:
             expr_str = expression_string(s->data.ret.value);
-            sprintf(stmt_str, "return %s;\n", expr_str);
+            sprintf(stmt_str, "return %s;", expr_str);
             free(expr_str);
             break;
         case EXPR_STMT:
             expr_str = expression_string(s->data.expr.value);
-            sprintf(stmt_str, "%s;\n", expr_str);
+            sprintf(stmt_str, "%s;", expr_str);
             free(expr_str);
             break;
         case NULL_STMT:
-            sprintf(stmt_str, "NULL Expression\n");
+            sprintf(stmt_str, "NULL Expression");
             break;
     }
 

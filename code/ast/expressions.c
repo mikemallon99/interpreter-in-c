@@ -51,11 +51,35 @@ typedef struct expr {
 } expr;
 
 
-// TODO
+char* literal_string(literal lit) {
+    char* lit_str = malloc(128);
+
+    switch (lit.type) {
+        case IDENT_LIT:
+            strcpy(lit_str, lit.data.t.value);
+            break;
+        case INT_LIT:
+            sprintf(lit_str, "%d", lit.data.i);
+            break;
+        default:
+            strcpy(lit_str, "");
+    }
+
+    return lit_str;
+}
+
+
 char* expression_string(expr* e) {
-    char* expr_str = malloc(128);
-    strcpy(expr_str, "");
-    return expr_str;
+    char* expr_str;
+
+    switch (e->type) {
+        case LITERAL_EXPR:
+            return literal_string(e->data.lit);
+        default:
+            expr_str = malloc(128);
+            strcpy(expr_str, "");
+            return expr_str;
+    }
 }
 
 #endif

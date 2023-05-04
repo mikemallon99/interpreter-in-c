@@ -3,7 +3,6 @@
 
 #include <stdlib.h>
 #include "../tokens.c"
-#include "../parser/parser.c"
 #include "expressions.c"
 
 typedef enum {
@@ -33,45 +32,5 @@ precedence get_precedence(token t) {
     }
 }
 
-
-expr* parse_literal(parser* p) {
-    expr* ex = malloc(sizeof(expr));
-    ex->type = LITERAL_EXPR;
-    literal lit;
-
-    switch (p->cur_token.type) {
-        case IDENT:
-            lit.type = IDENT_LIT;
-            lit.data.t = p->cur_token;
-            break;
-        case INT:
-            lit.type = INT_LIT;
-            lit.data.i = atoi(p->cur_token.value);
-            break;
-        default:
-            lit.type = NULL_LIT;
-            break;
-    }
-
-    ex->data.lit = lit;
-    return ex;
-}
-
-
-expr* parse_prefix(parser* p) {
-    switch (p->cur_token.type) {
-        // Literals
-        case IDENT:
-        case INT:
-            return parse_literal(p);
-        default:
-            return NULL;
-    }
-}
-
-
-expr* parse_expression(precedence prec) {
-    
-}
 
 #endif

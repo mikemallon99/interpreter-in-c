@@ -20,16 +20,16 @@ void next_parser_token(parser* p) {
 }
 
 void peek_error(parser* p, token_type cur_type) {
-    sprintf(p->errors[p->num_errors], "Expected next token to be %s but got %s instead.", get_token_type_string(cur_type), get_token_type_string(p->peek_token.tokenType));
+    sprintf(p->errors[p->num_errors], "Expected next token to be %s but got %s instead.", get_token_type_string(cur_type), get_token_type_string(p->peek_token.type));
     p->num_errors++;
 }
 
 bool cur_token_is(parser* p, token_type cur_type) {
-    return p->cur_token.tokenType == cur_type;
+    return p->cur_token.type == cur_type;
 }
 
 bool peek_token_is(parser* p, token_type peek_type) {
-    return p->peek_token.tokenType == peek_type;
+    return p->peek_token.type == peek_type;
 }
 
 bool expect_peek(parser* p, token_type peek_type) {
@@ -81,7 +81,7 @@ stmt parse_let_statement(parser* p) {
     }
 
     // Skip over the expressions for now
-    while (p->cur_token.tokenType != SEMICOLON) {
+    while (p->cur_token.type != SEMICOLON) {
         next_parser_token(p);
     }
 
@@ -96,7 +96,7 @@ stmt parse_return_statement(parser* p) {
     new_stmt.type = NULL_STMT;
     
     // Skip over the expressions for now
-    while (p->cur_token.tokenType != SEMICOLON) {
+    while (p->cur_token.type != SEMICOLON) {
         next_parser_token(p);
     }
 
@@ -108,7 +108,7 @@ stmt parse_return_statement(parser* p) {
 stmt parse_statement(parser* p) {
     stmt null_stmt;
     null_stmt.type = NULL_STMT;
-    switch (p->cur_token.tokenType) {
+    switch (p->cur_token.type) {
         case LET:
             return parse_let_statement(p);
         case RETURN:
@@ -123,7 +123,7 @@ stmt_list parse_program(parser* p) {
     stmt cur_stmt;
 
     // Need to do first iteration so we have our "prev_stmt" initialized
-    for (token t = p->cur_token; t.tokenType != EOF_T; t = p->cur_token) {
+    for (token t = p->cur_token; t.type != EOF_T; t = p->cur_token) {
         cur_stmt = parse_statement(p);
         // Just make the program contintue with the next statement 
         if (cur_stmt.type == NULL_STMT) {
@@ -138,5 +138,22 @@ stmt_list parse_program(parser* p) {
 
     return prog;
 }
+
+
+char* program_string(stmt_list* p) {
+    char* stmt_str = malloc(2048);
+    char* cur_str; 
+    int str_pos = 0;
+
+    // Just tack together all the statement strings
+    for (int i = 0; i < p->count; i++) {
+        cur_str = statement_string(&p->statements[i]);
+        strcpy(stmt_str + str_pos, cur_str);
+        str_pos += strlen(cur_str);
+    }
+    
+    return stmt_str;
+}
+
 
 #endif

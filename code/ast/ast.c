@@ -2,59 +2,76 @@
 #define _ASTC_
 
 #include <stdlib.h>
-#include <string.h>
 #include "../tokens.c"
 #include "../parser/parser.c"
+#include "expressions.c"
 
-// Expression data types
-//
-char* expression_string(expression* e) {
-    char* expr_str = malloc(128);
-    strcpy(expr_str, "");
-    return expr_str;
+typedef enum {
+    LOWEST_PR, EQUALS_PR, LESSGREATER_PR, SUM_PR, PRODUCT_PR, PREFIX_PR, CALL_PR
+} precedence;
+
+precedence get_precedence(token t) {
+    switch (t.type) {
+        case EQ:
+            return EQUALS_PR;
+        case NOT_EQ:
+            return EQUALS_PR;
+        case LT:
+            return LESSGREATER_PR;
+        case GT:
+            return LESSGREATER_PR;
+        case PLUS:
+            return SUM_PR;
+        case MINUS:
+            return SUM_PR;
+        case SLASH:
+            return PRODUCT_PR;
+        case ASTERISK:
+            return PRODUCT_PR;
+        default:
+            return LOWEST_PR;
+    }
 }
 
-char* statement_string(stmt* s) {
-    char* expr_str;
-    char* stmt_str = malloc(128);
 
-    switch (s->type) {
-        case LET_STMT:
-            expr_str = expression_string(s->data.let.value);
-            sprintf(stmt_str, "let %s = %s;\n", s->data.let.identifier.value, expr_str);
-            free(expr_str);
+expr* parse_literal(parser* p) {
+    expr* ex = malloc(sizeof(expr));
+    ex->type = LITERAL_EXPR;
+    literal lit;
+
+    switch (p->cur_token.type) {
+        case IDENT:
+            lit.type = IDENT_LIT;
+            lit.data.t = p->cur_token;
             break;
-        case RETURN_STMT:
-            expr_str = expression_string(s->data.ret.value);
-            sprintf(stmt_str, "return %s;\n", expr_str);
-            free(expr_str);
+        case INT:
+            lit.type = INT_LIT;
+            lit.data.i = atoi(p->cur_token.value);
             break;
-        case EXPR_STMT:
-            expr_str = expression_string(s->data.expr.value);
-            sprintf(stmt_str, "%s;\n", expr_str);
-            free(expr_str);
-            break;
-        case NULL_STMT:
-            sprintf(stmt_str, "NULL Expression\n");
+        default:
+            lit.type = NULL_LIT;
             break;
     }
 
-    return stmt_str;
+    ex->data.lit = lit;
+    return ex;
 }
 
-char* program_string(stmt_list* p) {
-    char* stmt_str = malloc(2048);
-    char* cur_str; 
-    int str_pos = 0;
 
-    // Just tack together all the statement strings
-    for (int i = 0; i < p->count; i++) {
-        cur_str = statement_string(&p->statements[i]);
-        strcpy(stmt_str + str_pos, cur_str);
-        str_pos += strlen(cur_str);
+expr* parse_prefix(parser* p) {
+    switch (p->cur_token.type) {
+        // Literals
+        case IDENT:
+        case INT:
+            return parse_literal(p);
+        default:
+            return NULL;
     }
+}
+
+
+expr* parse_expression(precedence prec) {
     
-    return stmt_str;
 }
 
 #endif

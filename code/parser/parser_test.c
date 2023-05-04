@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "parser.c"
-#include "../ast/ast.c"
+#include "../ast/ast_string.c"
 
 bool test_let_statement(stmt s, char* name) {
     if (s.type != LET_STMT) {
@@ -11,7 +11,7 @@ bool test_let_statement(stmt s, char* name) {
     }
 
     let_stmt let = s.data.let;
-    if (let.identifier.tokenType != IDENT) {
+    if (let.identifier.type != IDENT) {
         printf("Identifier is not an IDENT token\n");
         return false;
     }

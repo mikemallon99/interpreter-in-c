@@ -3,23 +3,25 @@
 
 #include <stdlib.h>
 #include "../tokens.c"
-#include "expressions.c"
+#include "../ast/expressions.c"
 
-typedef enum statement_type {
+// STATEMENT DATATYPES & FUNCTIONS
+
+typedef enum {
     LET_STMT, RETURN_STMT, EXPR_STMT, NULL_STMT
 } stmt_type;
 
 typedef struct {
     token identifier;
-    expression* value;
+    expr* value;
 } let_stmt;
 
 typedef struct {
-    expression* value;
+    expr* value;
 } return_stmt;
 
 typedef struct {
-    expression* value;
+    expr* value;
 } expr_stmt;
 
 typedef union {
@@ -32,6 +34,37 @@ typedef struct {
     stmt_type type;
     stmt_data data;
 } stmt;
+
+
+char* statement_string(stmt* s) {
+    char* expr_str;
+    char* stmt_str = malloc(128);
+
+    switch (s->type) {
+        case LET_STMT:
+            expr_str = expression_string(s->data.let.value);
+            sprintf(stmt_str, "let %s = %s;\n", s->data.let.identifier.value, expr_str);
+            free(expr_str);
+            break;
+        case RETURN_STMT:
+            expr_str = expression_string(s->data.ret.value);
+            sprintf(stmt_str, "return %s;\n", expr_str);
+            free(expr_str);
+            break;
+        case EXPR_STMT:
+            expr_str = expression_string(s->data.expr.value);
+            sprintf(stmt_str, "%s;\n", expr_str);
+            free(expr_str);
+            break;
+        case NULL_STMT:
+            sprintf(stmt_str, "NULL Expression\n");
+            break;
+    }
+
+    return stmt_str;
+}
+
+// STATEMENT DYNAMIC ARRAY
 
 typedef struct {
     stmt* statements;

@@ -17,9 +17,9 @@ void start() {
         }
 
         lexer l = get_lexer(input);
-        for (token t = next_lexer_token(&l); t.tokenType != EOF_T; t = next_lexer_token(&l)) {
+        for (token t = next_lexer_token(&l); t.type != EOF_T; t = next_lexer_token(&l)) {
             char* type_string = calloc(10, 1);
-            strcpy(type_string, get_token_type_string(t.tokenType));
+            strcpy(type_string, get_token_type_string(t.type));
             printf("{Type: %s, Value: '%s'}\n", type_string, t.value);
             free(type_string);
             free(t.value);

@@ -1,3 +1,6 @@
+#ifndef _REPLC_
+#define _REPLC_
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -25,3 +28,5 @@ void start() {
 
 }
 
+
+#endif

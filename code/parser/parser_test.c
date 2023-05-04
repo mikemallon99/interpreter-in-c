@@ -2,24 +2,21 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "parser.c"
+#include "../ast/ast.c"
 
-bool test_let_statement(statement s, char* name) {
-    if (s.type != SMT_LET) {
+bool test_let_statement(stmt s, char* name) {
+    if (s.type != LET_STMT) {
         printf("Identifier is not a let statement\n");
         return false;
     }
 
-    smt_let_data* data = (smt_let_data*) s.data;
-    if (data->t.tokenType != LET) {
-        printf("Statement is not a LET token\n");
-        return false;
-    }
-    if (data->ident.tokenType != IDENT) {
+    let_stmt let = s.data.let;
+    if (let.identifier.tokenType != IDENT) {
         printf("Identifier is not an IDENT token\n");
         return false;
     }
-    if (strcmp(data->ident.value, name) != 0) {
-        printf("Discovered ident name doesn't equal expected name: '%s' != '%s'\n", data->ident.value, name);
+    if (strcmp(let.identifier.value, name) != 0) {
+        printf("Discovered ident name doesn't equal expected name: '%s' != '%s'\n", let.identifier.value, name);
         return false;
     }
     return true;
@@ -48,23 +45,21 @@ void test_let_statements() {
     lexer l = get_lexer(input_string);
     parser p = new_parser(&l);
 
-    program* pgm = parse_program(&p);
+    stmt_list prog = parse_program(&p);
     assert(check_parser_errors(&p));
-    if (pgm == NULL) {
-        printf("parse_program returned NULL");
+    if (prog.count == 0) {
+        printf("parse_program has no statements");
         return;
     }
-    if (pgm->num_statements != 3) {
-        printf("parse_program did not collect 3 statements. Got %d", pgm->num_statements);
+    if (prog.count != 3) {
+        printf("parse_program did not collect 3 statements. Got %lld", prog.count);
         return;
     }
-
-    statement cur_statement;
 
     // Assign cur statement to next item in linked list
-    test_let_statement((cur_statement = *(pgm->statements)), "x");
-    test_let_statement((cur_statement = *(cur_statement.next)), "y");
-    test_let_statement((cur_statement = *(cur_statement.next)), "foobar");
+    test_let_statement(prog.statements[0], "x");
+    test_let_statement(prog.statements[1], "y");
+    test_let_statement(prog.statements[2], "foobar");
 }
 
 void test_return_statements() {
@@ -76,14 +71,14 @@ void test_return_statements() {
     lexer l = get_lexer(input_string);
     parser p = new_parser(&l);
 
-    program* pgm = parse_program(&p);
+    stmt_list prog = parse_program(&p);
     assert(check_parser_errors(&p));
-    if (pgm == NULL) {
-        printf("parse_program returned NULL");
+    if (prog.count == 0) {
+        printf("parse_program has no statements");
         return;
     }
-    if (pgm->num_statements != 3) {
-        printf("parse_program did not collect 3 statements. Got %d", pgm->num_statements);
+    if (prog.count != 3) {
+        printf("parse_program did not collect 3 statements. Got %lld", prog.count);
         return;
     }
 
@@ -92,15 +87,21 @@ void test_return_statements() {
 void test_program_string() {
     // Create let statement from raw tokens
     expression expr_data; 
-    smt_let_data let_data = {{LET, "let"}, {IDENT, "my_var"}, expr_data};
-    statement let_stmt = {SMT_LET, &let_data, NULL};
-    program p;
-    p.statements = &let_stmt;
-    p.num_statements = 1;
+    let_stmt let = {{IDENT, "my_var"}, &expr_data};
+    stmt let_stmt;
+    let_stmt.type = LET_STMT;
+    let_stmt.data.let = let;
+    stmt_list prog;
+    append_stmt_list(&prog, let_stmt);
+    if (prog.count == 0) {
+        printf("parse_program has no statements");
+        return;
+    }
 
-    char* prog_string = program_string(&p);
+    char* prog_string = program_string(&prog);
     printf(prog_string);
     free(prog_string);
+    printf("hi");
 }
 
 int main() {

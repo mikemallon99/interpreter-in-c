@@ -1,5 +1,8 @@
-#include "../ast/ast.c"
+#ifndef _PARSERC_
+#define _PARSERC_
+
 #include "../lexer/lexer.c"
+#include "statements.c"
 #include <stdlib.h>
 
 typedef struct {
@@ -61,27 +64,20 @@ parser new_parser(lexer* l) {
     return p;
 }
 
-statement* parse_let_statement(parser* p) {
-    statement* stmt = calloc(1, sizeof(statement));
-    stmt->type = SMT_LET;
-    smt_let_data* data = calloc(1, sizeof(smt_let_data));
-    stmt->data = data;
-    stmt->next = NULL;
-
-    // Let token
-    data->t = p->cur_token;
+stmt parse_let_statement(parser* p) {
+    let_stmt let;
+    stmt new_stmt;
+    new_stmt.type = NULL_STMT;
     
     // Verify next token is an identifier
     if (!expect_peek(p, IDENT)) {
-        stmt->data = NULL;
-        return stmt;
+        return new_stmt;
     }
-    data->ident = p->cur_token;
+    let.identifier = p->cur_token;
 
     // Verify next token is an equals sign
     if (!expect_peek(p, ASSIGN)) {
-        stmt->data = NULL;
-        return stmt;
+        return new_stmt;
     }
 
     // Skip over the expressions for now
@@ -89,66 +85,58 @@ statement* parse_let_statement(parser* p) {
         next_parser_token(p);
     }
 
-    return stmt;
+    new_stmt.type = LET_STMT;
+    new_stmt.data.let = let;
+    return new_stmt;
 }
 
-statement* parse_return_statement(parser* p) {
-    statement* stmt = calloc(1, sizeof(statement));
-    stmt->type = SMT_RETURN;
-    smt_return_data* data = calloc(1, sizeof(smt_return_data));
-    stmt->data = data;
-    stmt->next = NULL;
-
-    // Return token
-    data->t = p->cur_token;
+stmt parse_return_statement(parser* p) {
+    return_stmt ret;
+    stmt new_stmt;
+    new_stmt.type = NULL_STMT;
     
     // Skip over the expressions for now
     while (p->cur_token.tokenType != SEMICOLON) {
         next_parser_token(p);
     }
 
-    return stmt;
+    new_stmt.type = RETURN_STMT;
+    new_stmt.data.ret = ret;
+    return new_stmt;
 }
 
-statement* parse_statement(parser* p) {
+stmt parse_statement(parser* p) {
+    stmt null_stmt;
+    null_stmt.type = NULL_STMT;
     switch (p->cur_token.tokenType) {
         case LET:
             return parse_let_statement(p);
         case RETURN:
             return parse_return_statement(p);
         default:
-            return NULL;
+            return null_stmt;
     }
 }
 
-program* parse_program(parser* p) {
-    program* prog = calloc(1, sizeof(program));
-    statement* cur_stmt;
-    statement* prev_stmt;
+stmt_list parse_program(parser* p) {
+    stmt_list prog;
+    stmt cur_stmt;
 
     // Need to do first iteration so we have our "prev_stmt" initialized
-    cur_stmt = parse_statement(p);
-    if (cur_stmt == NULL) {
-        return NULL;
-    }
-    prog->statements = cur_stmt;
-    prog->num_statements = 1;
-    prev_stmt = cur_stmt;
-    next_parser_token(p);
-
     for (token t = p->cur_token; t.tokenType != EOF_T; t = p->cur_token) {
         cur_stmt = parse_statement(p);
         // Just make the program contintue with the next statement 
-        if (cur_stmt == NULL) {
+        if (cur_stmt.type == NULL_STMT) {
             next_parser_token(p);
             continue;
         }
-        prev_stmt->next = cur_stmt;
-        prog->num_statements++;
-        prev_stmt = cur_stmt;
+        append_stmt_list(&prog, cur_stmt);
+
         // Skip over semicolon
         next_parser_token(p);
     }
 
     return prog;
 }
+
+#endif

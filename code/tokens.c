@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef enum token_type {
+typedef enum {
     ILLEGAL,
     EOF_T,
 
@@ -45,7 +45,7 @@ typedef enum token_type {
     RETURN
 } token_type;
 
-typedef struct Tokens {
+typedef struct {
     token_type tokenType;
     char* value;
 } token;

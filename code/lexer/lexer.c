@@ -55,7 +55,7 @@ char* read_identifier(lexer* l) {
     }
     // Need to allocate memory for new char array here
     int id_len = l->position - position;
-    char* identifier = (char*)calloc(id_len, 1);
+    char* identifier = (char*)calloc(id_len+1, 1);
     strncpy(identifier, l->input_string + position, id_len);
     return identifier;
 }

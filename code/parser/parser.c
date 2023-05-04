@@ -119,7 +119,7 @@ stmt parse_statement(parser* p) {
 }
 
 stmt_list parse_program(parser* p) {
-    stmt_list prog;
+    stmt_list prog = new_stmt_list();
     stmt cur_stmt;
 
     // Need to do first iteration so we have our "prev_stmt" initialized

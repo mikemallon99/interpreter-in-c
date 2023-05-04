@@ -22,7 +22,7 @@ bool test_let_statement(stmt s, char* name) {
     return true;
 }
 
-void test_bad_let_statements() {
+bool test_bad_let_statements() {
     char input_string[] = 
         "let x 5;\n"
         "let = 10;\n"
@@ -34,9 +34,10 @@ void test_bad_let_statements() {
     parse_program(&p);
     // Make sure we got some errors up in here
     assert(!check_parser_errors(&p));
+    return true;
 }
 
-void test_let_statements() {
+bool test_let_statements() {
     char input_string[] = 
         "let x = 5;\n"
         "let y = 10;\n"
@@ -49,20 +50,21 @@ void test_let_statements() {
     assert(check_parser_errors(&p));
     if (prog.count == 0) {
         printf("parse_program has no statements");
-        return;
+        return false;
     }
     if (prog.count != 3) {
         printf("parse_program did not collect 3 statements. Got %lld", prog.count);
-        return;
+        return false;
     }
 
     // Assign cur statement to next item in linked list
     test_let_statement(prog.statements[0], "x");
     test_let_statement(prog.statements[1], "y");
     test_let_statement(prog.statements[2], "foobar");
+    return true;
 }
 
-void test_return_statements() {
+bool test_return_statements() {
     char input_string[] = 
         "return 5;\n"
         "return 10;\n"
@@ -75,39 +77,39 @@ void test_return_statements() {
     assert(check_parser_errors(&p));
     if (prog.count == 0) {
         printf("parse_program has no statements");
-        return;
+        return false;
     }
     if (prog.count != 3) {
         printf("parse_program did not collect 3 statements. Got %lld", prog.count);
-        return;
+        return false;
     }
-
+    return true;
 }
 
-void test_program_string() {
+bool test_program_string() {
     // Create let statement from raw tokens
     expression expr_data; 
     let_stmt let = {{IDENT, "my_var"}, &expr_data};
     stmt let_stmt;
     let_stmt.type = LET_STMT;
     let_stmt.data.let = let;
-    stmt_list prog;
+    stmt_list prog = new_stmt_list();
     append_stmt_list(&prog, let_stmt);
     if (prog.count == 0) {
         printf("parse_program has no statements");
-        return;
+        return false;
     }
 
     char* prog_string = program_string(&prog);
     printf(prog_string);
     free(prog_string);
-    printf("hi");
+    return true;
 }
 
 int main() {
-    test_let_statements();
-    test_bad_let_statements();
-    test_return_statements();
-    test_program_string();
+    assert(test_let_statements());
+    assert(test_bad_let_statements());
+    assert(test_return_statements());
+    assert(test_program_string());
     return 0;
 }

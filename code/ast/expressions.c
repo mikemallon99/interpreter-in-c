@@ -51,6 +51,9 @@ typedef struct expr {
 } expr;
 
 
+char* expression_string(expr*);
+
+
 char* literal_string(literal lit) {
     char* lit_str = malloc(128);
 
@@ -69,12 +72,34 @@ char* literal_string(literal lit) {
 }
 
 
+char* prefix_string(struct prefix_expr pre) {
+    char* pre_str = malloc(128);
+
+    sprintf(pre_str, "%s%s", pre.operator.value, expression_string(pre.right));
+
+    return pre_str;
+}
+
+
+char* infix_string(struct infix_expr inf) {
+    char* inf_str = malloc(128);
+
+    sprintf(inf_str, "(%s %s %s)", expression_string(inf.left), inf.operator.value, expression_string(inf.right));
+
+    return inf_str;
+}
+
+
 char* expression_string(expr* e) {
     char* expr_str;
 
     switch (e->type) {
         case LITERAL_EXPR:
             return literal_string(e->data.lit);
+        case PREFIX_EXPR:
+            return prefix_string(e->data.pre);
+        case INFIX_EXPR:
+            return infix_string(e->data.inf);
         default:
             expr_str = malloc(128);
             strcpy(expr_str, "");

@@ -6,6 +6,7 @@
 #include "../ast/ast.c"
 #include <stdlib.h>
 
+
 typedef struct {
     lexer* l;
     token cur_token;
@@ -14,6 +15,8 @@ typedef struct {
     char errors[64][256];
     int num_errors;
 } parser; 
+
+expr* parse_expression(parser*, precedence);
 
 
 void next_parser_token(parser* p) {
@@ -35,6 +38,11 @@ bool cur_token_is(parser* p, token_type cur_type) {
 
 bool peek_token_is(parser* p, token_type peek_type) {
     return p->peek_token.type == peek_type;
+}
+
+
+precedence peek_precedence(parser* p) {
+    return get_precedence(p->peek_token);
 }
 
 
@@ -97,19 +105,60 @@ expr* parse_literal(parser* p) {
 
 
 expr* parse_prefix(parser* p) {
-    switch (p->cur_token.type) {
-        // Literals
-        case IDENT:
-        case INT:
-            return parse_literal(p);
-        default:
-            return NULL;
-    }
+    expr* ex = malloc(sizeof(expr));
+    ex->type = PREFIX_EXPR;
+    struct prefix_expr pre;
+
+    pre.operator = p->cur_token;
+
+    next_parser_token(p);
+
+    pre.right = parse_expression(p, PREFIX_PR);
+
+    ex->data.pre = pre;
+    return ex;
+}
+
+
+expr* parse_infix(parser* p, expr* left) {
+    expr* ex = malloc(sizeof(expr));
+    ex->type = INFIX_EXPR;
+    struct infix_expr inf;
+
+    inf.operator = p->cur_token;
+    inf.left = left;
+
+    next_parser_token(p);
+
+    inf.right = parse_expression(p, get_precedence(inf.operator));
+
+    ex->data.inf = inf;
+    return ex;
 }
 
 
 expr* parse_expression(parser* p, precedence prec) {
-    expr* left_expr = parse_prefix(p);
+    // Inital prefix function
+    expr* left_expr;
+    switch (p->cur_token.type) {
+        // Literals
+        case IDENT:
+        case INT:
+            left_expr = parse_literal(p);
+            break;
+        case MINUS:
+        case BANG:
+            left_expr = parse_prefix(p);
+            break;
+        default:
+            left_expr = NULL;
+    }
+
+    while (!peek_token_is(p, SEMICOLON) && prec < peek_precedence(p)) {
+        next_parser_token(p);
+        left_expr = parse_infix(p, left_expr);
+    }
+
     return left_expr;
 }
 

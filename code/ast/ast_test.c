@@ -111,7 +111,8 @@ bool test_bool_expr() {
 }
 
 bool test_if_expr() {
-    char input_str[] = "if (1 > 2) { let i = 4; } else { let i = 0 }";
+    // IF ELSE
+    char input_str[] = "if (1 > 2) { let i = 4; } else { let i = 0; }";
     lexer l = get_lexer(input_str);
     parser p = new_parser(&l);
     stmt_list prog = parse_program(&p);
@@ -121,7 +122,43 @@ bool test_if_expr() {
     assert(ident_stmt.type == EXPR_STMT);
 
     char* prog_str = program_string(&prog);
-    printf("test_if_expr: %s\n", prog_str);
+    printf("test_if_expr IF ELSE: %s\n", prog_str);
+    assert(strcmp(prog_str, "if ((1 > 2)) { let i = 4; } else { let i = 0; }") == 0);
+    free(prog_str);
+
+    // JUST IF
+    char input_str_2[] = "if (1 > 2) { let i = 4; }";
+    l = get_lexer(input_str_2);
+    p = new_parser(&l);
+    prog = parse_program(&p);
+    assert(prog.count == 1);
+
+    ident_stmt = prog.statements[0];
+    assert(ident_stmt.type == EXPR_STMT);
+
+    prog_str = program_string(&prog);
+    printf("test_if_expr JUST IF: %s\n", prog_str);
+    assert(strcmp(prog_str, "if ((1 > 2)) { let i = 4; }") == 0);
+    free(prog_str);
+
+    return true;
+}
+
+
+bool test_fn_expr() {
+    // IF ELSE
+    char input_str[] = "fn (x, y) { return x * y; }";
+    lexer l = get_lexer(input_str);
+    parser p = new_parser(&l);
+    stmt_list prog = parse_program(&p);
+    assert(prog.count == 1);
+
+    stmt ident_stmt = prog.statements[0];
+    assert(ident_stmt.type == EXPR_STMT);
+
+    char* prog_str = program_string(&prog);
+    printf("test_fn_expr: %s\n", prog_str);
+    assert(strcmp(prog_str, "fn(x, y) { return (x * y); }") == 0);
     free(prog_str);
 
     return true;
@@ -205,7 +242,7 @@ bool test_infix_expr_2() {
 
     char* prog_str = program_string(&prog);
 
-    assert(strcmp(prog_str, "((-12 * 5) + ((3 * -5) * 3))"));
+    assert(strcmp(prog_str, "((-12 * 5) + ((3 * -5) * 3))") == 0);
 
     printf("test_infix_expr_2: %s\n", prog_str);
     free(prog_str);
@@ -222,5 +259,6 @@ int main() {
     test_infix_expr();
     test_infix_expr_2();
     test_if_expr();
+    test_fn_expr();
     return 0;
 }

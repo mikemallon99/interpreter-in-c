@@ -28,6 +28,7 @@ void next_parser_token(parser* p) {
 
 void peek_error(parser* p, token_type cur_type) {
     sprintf(p->errors[p->num_errors], "Expected next token to be %s but got %s instead.", get_token_type_string(cur_type), get_token_type_string(p->peek_token.type));
+    printf("ERROR: Expected next token to be %s but got %s instead.\n", get_token_type_string(cur_type), get_token_type_string(p->peek_token.type));
     p->num_errors++;
 }
 
@@ -212,8 +213,62 @@ expr* parse_if(parser* p) {
         next_parser_token(p);
 
         if_data.alternative = parse_block_stmt(p);
+        if_data.has_alt = true;
+    } else {
+        if_data.has_alt = false;
     }
 
+    ex->data.ifelse = if_data;
+    return ex;
+}
+
+
+token_list parse_fn_params(parser* p) {
+    token_list params = new_token_list();
+
+    if (peek_token_is(p, RPAREN)) {
+        next_parser_token(p);
+        return params;
+    }
+
+    while (true) {
+        if (!expect_peek(p, IDENT)) {
+            return params;
+        }
+        append_token_list(&params, p->cur_token);
+
+        if (peek_token_is(p, COMMA)) {
+            next_parser_token(p);
+        } else if (!expect_peek(p, RPAREN)) {
+            return params;
+        } else {
+            return params;
+        }
+    }
+}
+
+
+expr* parse_fn(parser* p) {
+    expr* ex = malloc(sizeof(expr));
+    ex->type = LITERAL_EXPR;
+    literal lit;
+    lit.type = FN_LIT;
+    struct fn_lit fn_data;
+
+    if (!expect_peek(p, LPAREN)) {
+        return NULL;
+    }
+
+    fn_data.params = parse_fn_params(p);
+    if (!expect_peek(p, LBRACE)) {
+        return NULL;
+    }
+    next_parser_token(p);
+
+    fn_data.body = parse_block_stmt(p);
+
+    lit.data.fn = fn_data;
+    ex->data.lit = lit;
     return ex;
 }
 
@@ -238,6 +293,9 @@ expr* parse_expression(parser* p, precedence prec) {
             break;
         case IF:
             left_expr = parse_if(p);
+            break;
+        case FUNCTION:
+            left_expr = parse_fn(p);
             break;
         default:
             left_expr = NULL;

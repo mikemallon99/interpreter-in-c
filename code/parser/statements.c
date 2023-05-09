@@ -55,7 +55,7 @@ char* statement_string(stmt* s) {
             break;
         case EXPR_STMT:
             expr_str = expression_string(s->data.expr.value);
-            sprintf(stmt_str, "%s;", expr_str);
+            sprintf(stmt_str, "%s", expr_str);
             free(expr_str);
             break;
         case NULL_STMT:
@@ -76,15 +76,15 @@ typedef struct stmt_list {
 
 stmt_list new_stmt_list() {
     stmt_list new_list;
-    new_list.capacity = sizeof(stmt);
-    new_list.statements = (stmt*)malloc(new_list.capacity);
+    new_list.capacity = 1;
+    new_list.statements = (stmt*)malloc(new_list.capacity * sizeof(stmt));
     new_list.count = 0;
     return new_list;
 }
 
 void append_stmt_list(stmt_list* cur_list, stmt new_stmt) {
     if ((cur_list->count) >= cur_list->capacity) {
-        cur_list->statements = (stmt*)realloc(cur_list->statements, cur_list->capacity * 2);
+        cur_list->statements = (stmt*)realloc(cur_list->statements, cur_list->capacity * 2 * sizeof(stmt));
         cur_list->capacity *= 2;
     }
     cur_list->statements[cur_list->count] = new_stmt;

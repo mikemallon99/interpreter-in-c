@@ -17,6 +17,7 @@ typedef struct {
 } parser; 
 
 expr* parse_expression(parser*, precedence);
+stmt parse_statement(parser*);
 
 
 void next_parser_token(parser* p) {
@@ -94,6 +95,14 @@ expr* parse_literal(parser* p) {
             lit.type = INT_LIT;
             lit.data.i = atoi(p->cur_token.value);
             break;
+        case TRUE:
+            lit.type = BOOL_LIT;
+            lit.data.b = true;
+            break;
+        case FALSE:
+            lit.type = BOOL_LIT;
+            lit.data.b = false;
+            break;
         default:
             lit.type = NULL_LIT;
             break;
@@ -137,6 +146,78 @@ expr* parse_infix(parser* p, expr* left) {
 }
 
 
+expr* parse_group(parser* p) {
+    next_parser_token(p);
+
+    expr* ex = parse_expression(p, LOWEST_PR);
+
+    if (!expect_peek(p, RPAREN)) {
+        return NULL;
+    }
+
+    return ex;
+}
+
+
+stmt_list parse_block_stmt(parser* p) {
+    stmt_list block = new_stmt_list();
+    stmt cur_stmt;
+
+    // Need to do first iteration so we have our "prev_stmt" initialized
+    for (token t = p->cur_token; t.type != RBRACE; t = p->cur_token) {
+        cur_stmt = parse_statement(p);
+        // Just make the program contintue with the next statement 
+        if (cur_stmt.type == NULL_STMT) {
+            next_parser_token(p);
+            continue;
+        }
+        append_stmt_list(&block, cur_stmt);
+
+        // Skip over semicolon
+        next_parser_token(p);
+    }
+
+    return block;
+}
+
+
+expr* parse_if(parser* p) {
+    expr* ex = malloc(sizeof(expr));
+    ex->type = IF_EXPR;
+    struct if_expr if_data;
+
+    if (!expect_peek(p, LPAREN)) {
+        return NULL;
+    }
+    next_parser_token(p);
+
+    if_data.condition = parse_expression(p, LOWEST_PR);
+
+    if (!expect_peek(p, RPAREN)) {
+        return NULL;
+    }
+    if (!expect_peek(p, LBRACE)) {
+        return NULL;
+    }
+    next_parser_token(p);
+
+    if_data.consequence = parse_block_stmt(p);
+
+    // And then if theres an "else" statement
+    if (peek_token_is(p, ELSE)) {
+        next_parser_token(p);
+        if (!expect_peek(p, LBRACE)) {
+            return NULL;
+        }
+        next_parser_token(p);
+
+        if_data.alternative = parse_block_stmt(p);
+    }
+
+    return ex;
+}
+
+
 expr* parse_expression(parser* p, precedence prec) {
     // Inital prefix function
     expr* left_expr;
@@ -144,11 +225,19 @@ expr* parse_expression(parser* p, precedence prec) {
         // Literals
         case IDENT:
         case INT:
+        case TRUE:
+        case FALSE:
             left_expr = parse_literal(p);
             break;
         case MINUS:
         case BANG:
             left_expr = parse_prefix(p);
+            break;
+        case LPAREN:
+            left_expr = parse_group(p);
+            break;
+        case IF:
+            left_expr = parse_if(p);
             break;
         default:
             left_expr = NULL;
@@ -260,22 +349,6 @@ stmt_list parse_program(parser* p) {
     }
 
     return prog;
-}
-
-
-char* program_string(stmt_list* p) {
-    char* stmt_str = malloc(2048);
-    char* cur_str; 
-    int str_pos = 0;
-
-    // Just tack together all the statement strings
-    for (int i = 0; i < p->count; i++) {
-        cur_str = statement_string(&p->statements[i]);
-        strcpy(stmt_str + str_pos, cur_str);
-        str_pos += strlen(cur_str);
-    }
-    
-    return stmt_str;
 }
 
 

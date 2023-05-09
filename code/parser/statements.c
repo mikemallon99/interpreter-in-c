@@ -3,9 +3,11 @@
 
 #include <stdlib.h>
 #include "../tokens.c"
-#include "../ast/expressions.c"
 
 // STATEMENT DATATYPES & FUNCTIONS
+
+typedef struct expr expr;
+char* expression_string(expr*);
 
 typedef enum {
     LET_STMT, RETURN_STMT, EXPR_STMT, NULL_STMT
@@ -64,9 +66,9 @@ char* statement_string(stmt* s) {
     return stmt_str;
 }
 
-// STATEMENT DYNAMIC ARRAY
 
-typedef struct {
+// STATEMENT DYNAMIC ARRAY
+typedef struct stmt_list {
     stmt* statements;
     size_t count;
     size_t capacity;
@@ -88,5 +90,22 @@ void append_stmt_list(stmt_list* cur_list, stmt new_stmt) {
     cur_list->statements[cur_list->count] = new_stmt;
     cur_list->count++;
 }
+
+
+char* program_string(stmt_list* p) {
+    char* stmt_str = malloc(2048);
+    char* cur_str; 
+    int str_pos = 0;
+
+    // Just tack together all the statement strings
+    for (int i = 0; i < p->count; i++) {
+        cur_str = statement_string(&p->statements[i]);
+        strcpy(stmt_str + str_pos, cur_str);
+        str_pos += strlen(cur_str);
+    }
+    
+    return stmt_str;
+}
+
 
 #endif

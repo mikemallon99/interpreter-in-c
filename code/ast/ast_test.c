@@ -69,6 +69,64 @@ bool test_int_expr() {
     return true;
 }
 
+void test_int_literal(expr* ex, int expected) {
+    assert(ex->type == LITERAL_EXPR);
+    literal lit = ex->data.lit;
+    assert(lit.type == INT_LIT);
+    assert(lit.data.i == expected);
+}
+
+void test_ident_literal(expr* ex, char* expected) {
+    assert(ex->type == LITERAL_EXPR);
+    literal lit = ex->data.lit;
+    assert(lit.type == IDENT_LIT);
+    assert(strcmp(lit.data.t.value, expected) == 0);
+}
+
+void test_bool_literal(expr* ex, bool expected) {
+    assert(ex->type == LITERAL_EXPR);
+    literal lit = ex->data.lit;
+    assert(lit.type == BOOL_LIT);
+    assert(lit.data.b == expected);
+}
+
+bool test_bool_expr() {
+    char input_str[] = "false;";
+    lexer l = get_lexer(input_str);
+    parser p = new_parser(&l);
+    stmt_list prog = parse_program(&p);
+    assert(prog.count == 1);
+
+    stmt ident_stmt = prog.statements[0];
+    assert(ident_stmt.type == EXPR_STMT);
+
+    expr* ex = ident_stmt.data.expr.value;
+    test_bool_literal(ex, false);
+
+    char* prog_str = program_string(&prog);
+    printf("test_bool_expr: %s\n", prog_str);
+    free(prog_str);
+
+    return true;
+}
+
+bool test_if_expr() {
+    char input_str[] = "if (1 > 2) { let i = 4; } else { let i = 0 }";
+    lexer l = get_lexer(input_str);
+    parser p = new_parser(&l);
+    stmt_list prog = parse_program(&p);
+    assert(prog.count == 1);
+
+    stmt ident_stmt = prog.statements[0];
+    assert(ident_stmt.type == EXPR_STMT);
+
+    char* prog_str = program_string(&prog);
+    printf("test_if_expr: %s\n", prog_str);
+    free(prog_str);
+
+    return true;
+}
+
 bool test_prefix_expr() {
     char input_str[] = "-12;";
     lexer l = get_lexer(input_str);
@@ -85,11 +143,7 @@ bool test_prefix_expr() {
     struct prefix_expr pre = ex->data.pre;
     assert(pre.operator.type == MINUS);
 
-    assert(pre.right->type == LITERAL_EXPR);
-    assert(pre.right->data.lit.type == INT_LIT);
-    literal lit = pre.right->data.lit;
-    assert(lit.type == INT_LIT);
-    assert(lit.data.i == 12);
+    test_int_literal(pre.right, 12);
 
     char* prog_str = program_string(&prog);
     printf("test_prefix_expr: %s\n", prog_str);
@@ -163,8 +217,10 @@ int main() {
     assert(test_program_string());
     test_identifier_expr();
     test_int_expr();
+    test_bool_expr();
     test_prefix_expr();
     test_infix_expr();
     test_infix_expr_2();
+    test_if_expr();
     return 0;
 }

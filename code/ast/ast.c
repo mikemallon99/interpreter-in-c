@@ -27,6 +27,8 @@ precedence get_precedence(token t) {
             return PRODUCT_PR;
         case ASTERISK:
             return PRODUCT_PR;
+        case LPAREN:
+            return CALL_PR;
         default:
             return LOWEST_PR;
     }

@@ -248,6 +248,43 @@ token_list parse_fn_params(parser* p) {
 }
 
 
+expr_list parse_call_args(parser* p) {
+    expr_list params = new_expr_list();
+
+    if (peek_token_is(p, RPAREN)) {
+        next_parser_token(p);
+        return params;
+    }
+
+    while (true) {
+        next_parser_token(p);
+        append_expr_list(&params, parse_expression(p, LOWEST_PR));
+
+        if (peek_token_is(p, COMMA)) {
+            next_parser_token(p);
+        } else if (!expect_peek(p, RPAREN)) {
+            return params;
+        } else {
+            return params;
+        }
+    }
+}
+
+
+expr* parse_call(parser* p, expr* left) {
+    expr* ex = malloc(sizeof(expr));
+    ex->type = CALL_EXPR;
+    struct call_expr call;
+
+    call.func = left;
+
+    call.args = parse_call_args(p);
+
+    ex->data.call = call;
+    return ex;
+}
+
+
 expr* parse_fn(parser* p) {
     expr* ex = malloc(sizeof(expr));
     ex->type = LITERAL_EXPR;
@@ -303,7 +340,14 @@ expr* parse_expression(parser* p, precedence prec) {
 
     while (!peek_token_is(p, SEMICOLON) && prec < peek_precedence(p)) {
         next_parser_token(p);
-        left_expr = parse_infix(p, left_expr);
+        switch (p->cur_token.type) {
+            case LPAREN:
+                left_expr = parse_call(p, left_expr);
+                break;
+            default:
+                left_expr = parse_infix(p, left_expr);
+                break;
+        }
     }
 
     return left_expr;

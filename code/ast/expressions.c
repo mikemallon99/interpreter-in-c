@@ -9,6 +9,8 @@
 
 typedef struct expr expr;
 
+char* expression_string(expr*);
+
 typedef enum {
     INT_LIT, BOOL_LIT, IDENT_LIT, FN_LIT, NULL_LIT,
 } literal_type;
@@ -38,20 +40,67 @@ void append_token_list(token_list* cur_list, token new_token) {
 }
 
 char* token_list_string(token_list* tl) {
-    char* expr_str;
     char* tl_str = malloc(128);
+    char* tmp_str = malloc(128);
     strcpy(tl_str, "");
 
     for(int i = 0; i < tl->count; i++) {
         if (i == tl->count - 1) {
-            sprintf(tl_str, "%s%s", tl_str, tl->tokens[i].value);
+            strcpy(tmp_str, tl_str);
+            sprintf(tl_str, "%s%s", tmp_str, tl->tokens[i].value);
         } else {
-            sprintf(tl_str, "%s%s, ", tl_str, tl->tokens[i].value);
+            strcpy(tmp_str, tl_str);
+            sprintf(tl_str, "%s%s, ", tmp_str, tl->tokens[i].value);
         }
     }
 
+    free(tmp_str);
     return tl_str;
 }
+
+
+typedef struct expr_list {
+    expr** exprs;
+    size_t count;
+    size_t capacity;
+} expr_list;
+
+expr_list new_expr_list() {
+    expr_list new_list;
+    new_list.capacity = 1;
+    new_list.exprs = (expr**)malloc(new_list.capacity * sizeof(expr*));
+    new_list.count = 0;
+    return new_list;
+}
+
+void append_expr_list(expr_list* cur_list, expr* new_expr) {
+    if ((cur_list->count) >= cur_list->capacity) {
+        cur_list->exprs = (expr**)realloc(cur_list->exprs, cur_list->capacity * 2 * sizeof(expr*));
+        cur_list->capacity *= 2;
+    }
+    cur_list->exprs[cur_list->count] = new_expr;
+    cur_list->count++;
+}
+
+char* expr_list_string(expr_list* el) {
+    char* el_str = malloc(128);
+    char* tmp_str = malloc(128);
+    strcpy(el_str, "");
+
+    for(int i = 0; i < el->count; i++) {
+        if (i == el->count - 1) {
+            strcpy(tmp_str, el_str);
+            sprintf(el_str, "%s%s", tmp_str, expression_string(el->exprs[i]));
+        } else {
+            strcpy(tmp_str, el_str);
+            sprintf(el_str, "%s%s, ", tmp_str, expression_string(el->exprs[i]));
+        }
+    }
+
+    free(tmp_str);
+    return el_str;
+}
+
 
 struct fn_lit {
     token_list params;
@@ -71,7 +120,7 @@ typedef struct {
 } literal;
 
 typedef enum {
-    INFIX_EXPR, PREFIX_EXPR, LITERAL_EXPR, IF_EXPR
+    INFIX_EXPR, PREFIX_EXPR, LITERAL_EXPR, IF_EXPR, CALL_EXPR
 } expr_type;
 
 struct infix_expr {
@@ -92,10 +141,16 @@ struct if_expr {
     stmt_list alternative;
 };
 
+struct call_expr {
+    expr* func;
+    expr_list args;
+};
+
 typedef union {
     struct infix_expr inf;
     struct prefix_expr pre;
     struct if_expr ifelse;
+    struct call_expr call;
     literal lit;
 } expr_data;
 
@@ -103,9 +158,6 @@ typedef struct expr {
     expr_type type;
     expr_data data;
 } expr;
-
-
-char* expression_string(expr*);
 
 
 char* literal_string(literal lit) {
@@ -164,6 +216,15 @@ char* if_string(struct if_expr ifelse) {
 }
 
 
+char* call_string(struct call_expr call) {
+    char* call_str = malloc(128);
+
+    sprintf(call_str, "%s(%s)", expression_string(call.func), expr_list_string(&call.args));
+
+    return call_str;
+}
+
+
 char* expression_string(expr* e) {
     char* expr_str;
 
@@ -176,6 +237,8 @@ char* expression_string(expr* e) {
             return infix_string(e->data.inf);
         case IF_EXPR:
             return if_string(e->data.ifelse);
+        case CALL_EXPR:
+            return call_string(e->data.call);
         default:
             expr_str = malloc(128);
             strcpy(expr_str, "");

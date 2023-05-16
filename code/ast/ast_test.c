@@ -164,6 +164,47 @@ bool test_fn_expr() {
     return true;
 }
 
+
+bool test_call_expr_1() {
+    // IF ELSE
+    char input_str[] = "fn (x, y) { return x * y; } (1, 2)";
+    lexer l = get_lexer(input_str);
+    parser p = new_parser(&l);
+    stmt_list prog = parse_program(&p);
+    assert(prog.count == 1);
+
+    stmt ident_stmt = prog.statements[0];
+    assert(ident_stmt.type == EXPR_STMT);
+
+    char* prog_str = program_string(&prog);
+    printf("test_fn_expr: %s\n", prog_str);
+    assert(strcmp(prog_str, "fn(x, y) { return (x * y); }(1, 2)") == 0);
+    free(prog_str);
+
+    return true;
+}
+
+
+bool test_call_expr_2() {
+    // IF ELSE
+    char input_str[] = "2 * -test_fn()";
+    lexer l = get_lexer(input_str);
+    parser p = new_parser(&l);
+    stmt_list prog = parse_program(&p);
+    assert(prog.count == 1);
+
+    stmt ident_stmt = prog.statements[0];
+    assert(ident_stmt.type == EXPR_STMT);
+
+    char* prog_str = program_string(&prog);
+    printf("test_fn_expr: %s\n", prog_str);
+    assert(strcmp(prog_str, "(2 * -test_fn())") == 0);
+    free(prog_str);
+
+    return true;
+}
+
+
 bool test_prefix_expr() {
     char input_str[] = "-12;";
     lexer l = get_lexer(input_str);
@@ -260,5 +301,7 @@ int main() {
     test_infix_expr_2();
     test_if_expr();
     test_fn_expr();
+    test_call_expr_1();
+    test_call_expr_2();
     return 0;
 }

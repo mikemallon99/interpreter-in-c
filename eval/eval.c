@@ -3,6 +3,7 @@
 
 #include "../ast/expressions.c"
 #include "../parser/statements.c"
+#include <assert.h>
 #include <string.h>
 
 #define ENV_MAP_SIZE 128
@@ -68,7 +69,7 @@ literal cast_as_bool(literal l) {
 }
 
 
-literal eval_prefix(token op, literal right, env_map* env) {
+literal eval_prefix(token op, literal right) {
     literal null;
     null.type = NULL_LIT;
     switch (op.type) {
@@ -88,6 +89,130 @@ literal eval_prefix(token op, literal right, env_map* env) {
 }
 
 
+literal lit_gt(literal left, literal right) {
+    literal out;
+    out.type = NULL_LIT;
+
+    if (left.type != right.type) {
+        return out;
+    }
+
+    switch (left.type) {
+        case INT_LIT:
+            out.type = BOOL_LIT;
+            out.data.b = left.data.i > right.data.i;
+            return out;
+        default:
+            return out;
+    }
+}
+
+
+literal lit_lt(literal left, literal right) {
+    literal out;
+    out.type = NULL_LIT;
+
+    if (left.type != right.type) {
+        return out;
+    }
+
+    switch (left.type) {
+        case INT_LIT:
+            out.type = BOOL_LIT;
+            out.data.b = left.data.i < right.data.i;
+            return out;
+        default:
+            return out;
+    }
+}
+
+
+literal lit_eq(literal left, literal right) {
+    literal out;
+    out.type = NULL_LIT;
+
+    if (left.type != right.type) {
+        return out;
+    }
+
+    switch (left.type) {
+        case INT_LIT:
+            out.type = BOOL_LIT;
+            out.data.b = left.data.i == right.data.i;
+            return out;
+        default:
+            return out;
+    }
+}
+
+
+literal lit_neq(literal left, literal right) {
+    literal out;
+    out.type = NULL_LIT;
+
+    if (left.type != right.type) {
+        return out;
+    }
+
+    switch (left.type) {
+        case INT_LIT:
+            out.type = BOOL_LIT;
+            out.data.b = left.data.i != right.data.i;
+            return out;
+        default:
+            return out;
+    }
+}
+
+
+literal eval_infix(token op, literal left, literal right) {
+    literal out;
+    out.type = NULL_LIT;
+
+
+    switch (op.type) {
+        case PLUS:
+            if (left.type != INT_LIT || right.type != INT_LIT) {
+                return out;
+            }
+            out.type = INT_LIT;
+            out.data.i = left.data.i + right.data.i;
+            return out;
+        case MINUS:
+            if (left.type != INT_LIT || right.type != INT_LIT) {
+                return out;
+            }
+            out.type = INT_LIT;
+            out.data.i = left.data.i - right.data.i;
+            return out;
+        case ASTERISK:
+            if (left.type != INT_LIT || right.type != INT_LIT) {
+                return out;
+            }
+            out.type = INT_LIT;
+            out.data.i = left.data.i * right.data.i;
+            return out;
+        case SLASH:
+            if (left.type != INT_LIT || right.type != INT_LIT) {
+                return out;
+            }
+            out.type = INT_LIT;
+            out.data.i = left.data.i / right.data.i;
+            return out;
+        case GT:
+            return lit_gt(left, right);
+        case LT:
+            return lit_lt(left, right);
+        case EQ:
+            return lit_eq(left, right);
+        case NOT_EQ:
+            return lit_neq(left, right);
+        default:
+            return out;
+    }
+}
+
+
 literal eval_expr(expr* e, env_map* env) {
     literal null;
     null.type = NULL_LIT;
@@ -100,7 +225,9 @@ literal eval_expr(expr* e, env_map* env) {
             }
             return e->data.lit;
         case PREFIX_EXPR:
-            return eval_prefix(e->data.pre.operator, eval_expr(e->data.pre.right, env), env);
+            return eval_prefix(e->data.pre.operator, eval_expr(e->data.pre.right, env));
+        case INFIX_EXPR:
+            return eval_infix(e->data.inf.operator, eval_expr(e->data.inf.left, env), eval_expr(e->data.inf.right, env));
         default:
             return null;
     }

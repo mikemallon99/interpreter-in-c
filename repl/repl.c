@@ -5,12 +5,14 @@
 #include <stdio.h>
 #include <string.h>
 #include "../parser/parser.c"
+#include "../eval/eval.c"
 
 void start() {
     char input[100];
     lexer l;
     parser p;
     stmt_list prog;
+    literal out;
 
     while (true) {
         printf(">> ");
@@ -23,7 +25,8 @@ void start() {
         l = get_lexer(input);
         p = new_parser(&l);
         prog = parse_program(&p);
-        printf("%s\n", program_string(&prog));
+        out = eval_program(&prog);
+        printf("%s\n", literal_string(out));
     }
 
 }

@@ -59,9 +59,32 @@ bool test_eval_prefix() {
     assert_prog_output("-5;", exp_val);
 }
 
+bool test_eval_infix() {
+    literal exp_val;
+
+    // EVAL BANGS
+    exp_val.type = INT_LIT;
+    exp_val.data.i = 35;
+    assert_prog_output("5 * 5 + 10;", exp_val);
+
+    exp_val.type = INT_LIT;
+    exp_val.data.i = 75;
+    assert_prog_output("5 * (5 + 10);", exp_val);
+
+    exp_val.type = INT_LIT;
+    exp_val.data.i = 20;
+    assert_prog_output("(100 / 2 + 10) / 3;", exp_val);
+
+    // EVAL MINUS
+    exp_val.type = INT_LIT;
+    exp_val.data.i = -5;
+    assert_prog_output("-10 + 25 - 20;", exp_val);
+}
+
 int main() {
     test_eval_int();
     test_eval_let();
     test_eval_prefix();
+    test_eval_infix();
     return 0;
 }

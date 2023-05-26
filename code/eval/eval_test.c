@@ -2,40 +2,59 @@
 #include <assert.h>
 #include "eval.c"
 
-bool test_eval_int() {
-    char input_str[] = "5;";
+bool assert_prog_output(char* input_str, literal exp_val) {
     lexer l = get_lexer(input_str);
     parser p = new_parser(&l);
     stmt_list prog = parse_program(&p);
-    assert(prog.count == 1);
-
     literal out = eval_program(&prog);
 
-    printf("test_eval_int: %s\n", literal_string(out));
-    assert(out.type == INT_LIT);
-    assert(out.data.i == 5);
+    printf("%s: %s\n", input_str, literal_string(out));
 
-    return true;
+    assert(out.type == exp_val.type);
+    switch (out.type) {
+        case INT_LIT:
+            assert(out.data.i == exp_val.data.i);
+            break;
+        case BOOL_LIT:
+            assert(out.data.b == exp_val.data.b);
+            break;
+        default:
+            assert(false);
+    }
+}
+
+bool test_eval_int() {
+    literal exp_val;
+    exp_val.type = INT_LIT;
+    exp_val.data.i = 5;
+    assert_prog_output("5;", exp_val);
 }
 
 bool test_eval_let() {
-    char input_str[] = "let five = 5; five;";
-    lexer l = get_lexer(input_str);
-    parser p = new_parser(&l);
-    stmt_list prog = parse_program(&p);
-    assert(prog.count == 2);
+    literal exp_val;
+    exp_val.type = INT_LIT;
+    exp_val.data.i = 5;
+    assert_prog_output("let five = 5; five;", exp_val);
+}
 
-    literal out = eval_program(&prog);
+bool test_eval_prefix() {
+    literal exp_val;
+    exp_val.type = BOOL_LIT;
+    exp_val.data.b = false;
+    assert_prog_output("!5;", exp_val);
 
-    printf("test_eval_let: %s\n", literal_string(out));
-    assert(out.type == INT_LIT);
-    assert(out.data.i == 5);
+    exp_val.type = BOOL_LIT;
+    exp_val.data.b = true;
+    assert_prog_output("!!5;", exp_val);
 
-    return true;
+    exp_val.type = BOOL_LIT;
+    exp_val.data.b = true;
+    assert_prog_output("!false;", exp_val);
 }
 
 int main() {
     test_eval_int();
     test_eval_let();
+    test_eval_prefix();
     return 0;
 }

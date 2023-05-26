@@ -45,6 +45,41 @@ literal get_env(env_map* map, char* key) {
 }
 
 
+literal eval_literal_as_bool(literal l) {
+    literal b;
+    b.type = BOOL_LIT;
+    switch (l.type) {
+        case BOOL_LIT:
+            b.data.b = l.data.b;
+            break;
+        case INT_LIT:
+            b.data.b = l.data.i;
+            break;
+        case FN_LIT:
+            b.data.b = l.data.fn.body.count;
+            break;
+        case NULL_LIT:
+            b.data.b = false;
+            break;
+        default:
+            assert(false);
+    }
+    return b;
+}
+
+
+literal eval_prefix(token op, literal right, env_map* env) {
+    switch (op.type) {
+        case BANG:
+            right = eval_literal_as_bool(right);
+            right.data.b = !right.data.b;
+            return right;
+        default:
+            assert(false);
+    }
+}
+
+
 literal eval_expr(expr* e, env_map* env) {
     literal null;
     null.type = NULL_LIT;
@@ -56,6 +91,8 @@ literal eval_expr(expr* e, env_map* env) {
                 return get_env(env, e->data.lit.data.t.value);
             }
             return e->data.lit;
+        case PREFIX_EXPR:
+            return eval_prefix(e->data.pre.operator, eval_expr(e->data.pre.right, env), env);
         default:
             return null;
     }

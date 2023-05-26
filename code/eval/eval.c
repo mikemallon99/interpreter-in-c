@@ -45,7 +45,7 @@ literal get_env(env_map* map, char* key) {
 }
 
 
-literal eval_literal_as_bool(literal l) {
+literal cast_as_bool(literal l) {
     literal b;
     b.type = BOOL_LIT;
     switch (l.type) {
@@ -69,10 +69,18 @@ literal eval_literal_as_bool(literal l) {
 
 
 literal eval_prefix(token op, literal right, env_map* env) {
+    literal null;
+    null.type = NULL_LIT;
     switch (op.type) {
         case BANG:
-            right = eval_literal_as_bool(right);
+            right = cast_as_bool(right);
             right.data.b = !right.data.b;
+            return right;
+        case MINUS:
+            if (right.type != INT_LIT) {
+                return null;
+            }
+            right.data.i = -right.data.i;
             return right;
         default:
             assert(false);

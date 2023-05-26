@@ -39,6 +39,8 @@ bool test_eval_let() {
 
 bool test_eval_prefix() {
     literal exp_val;
+
+    // EVAL BANGS
     exp_val.type = BOOL_LIT;
     exp_val.data.b = false;
     assert_prog_output("!5;", exp_val);
@@ -50,6 +52,11 @@ bool test_eval_prefix() {
     exp_val.type = BOOL_LIT;
     exp_val.data.b = true;
     assert_prog_output("!false;", exp_val);
+
+    // EVAL MINUS
+    exp_val.type = INT_LIT;
+    exp_val.data.i = -5;
+    assert_prog_output("-5;", exp_val);
 }
 
 int main() {

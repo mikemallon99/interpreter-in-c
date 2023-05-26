@@ -8,6 +8,8 @@
 
 #define ENV_MAP_SIZE 128
 
+literal eval_program(stmt_list* p);
+
 typedef struct env_map {
     char* key;
     literal value;
@@ -228,6 +230,14 @@ literal eval_expr(expr* e, env_map* env) {
             return eval_prefix(e->data.pre.operator, eval_expr(e->data.pre.right, env));
         case INFIX_EXPR:
             return eval_infix(e->data.inf.operator, eval_expr(e->data.inf.left, env), eval_expr(e->data.inf.right, env));
+        case IF_EXPR:
+            if (cast_as_bool(eval_expr(e->data.ifelse.condition, env)).data.b) {
+                return eval_program(&e->data.ifelse.consequence);
+            } else if (e->data.ifelse.has_alt) {
+                return eval_program(&e->data.ifelse.alternative);
+            } else {
+                return null;
+            }
         default:
             return null;
     }

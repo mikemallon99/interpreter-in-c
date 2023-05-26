@@ -18,6 +18,8 @@ bool assert_prog_output(char* input_str, literal exp_val) {
         case BOOL_LIT:
             assert(out.data.b == exp_val.data.b);
             break;
+        case NULL_LIT:
+            break;
         default:
             assert(false);
     }
@@ -62,7 +64,6 @@ bool test_eval_prefix() {
 bool test_eval_infix() {
     literal exp_val;
 
-    // EVAL BANGS
     exp_val.type = INT_LIT;
     exp_val.data.i = 35;
     assert_prog_output("5 * 5 + 10;", exp_val);
@@ -75,10 +76,24 @@ bool test_eval_infix() {
     exp_val.data.i = 20;
     assert_prog_output("(100 / 2 + 10) / 3;", exp_val);
 
-    // EVAL MINUS
     exp_val.type = INT_LIT;
     exp_val.data.i = -5;
     assert_prog_output("-10 + 25 - 20;", exp_val);
+}
+
+bool test_eval_ifelse() {
+    literal exp_val;
+
+    exp_val.type = INT_LIT;
+    exp_val.data.i = 10;
+    assert_prog_output("if (5 == 5) { 10 } else { -10 };", exp_val);
+
+    exp_val.type = INT_LIT;
+    exp_val.data.i = -10;
+    assert_prog_output("if (5 != 5) { 10 } else { -10 };", exp_val);
+
+    exp_val.type = NULL_LIT;
+    assert_prog_output("if (5 != 5) { 10 };", exp_val);
 }
 
 int main() {
@@ -86,5 +101,6 @@ int main() {
     test_eval_let();
     test_eval_prefix();
     test_eval_infix();
+    test_eval_ifelse();
     return 0;
 }

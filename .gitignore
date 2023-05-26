@@ -1,2 +1,3 @@
 *.exe
 code/.vscode
+book/*

@@ -29,7 +29,11 @@ void start() {
         p = new_parser(&l);
         prog = parse_program(&p);
         out = eval_program(&prog, &env);
-        printf("%s\n", literal_string(out.lit));
+        if (out.type == ERR_OBJ) {
+            printf("%s\n", out.err);
+        } else {
+            printf("%s\n", literal_string(out.lit));
+        }
     }
 
     free(env.inner);

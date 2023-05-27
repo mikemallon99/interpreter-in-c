@@ -1,25 +1,6 @@
-#ifndef _PARSERC_
-#define _PARSERC_
+#include <stdio.h>
 
-#include "../lexer/lexer.c"
-#include "../eval/eval.c"
-#include "statements.c"
-#include "../ast/ast.c"
-#include <stdlib.h>
-
-
-typedef struct {
-    lexer* l;
-    token cur_token;
-    token peek_token;
-    // This needs to be a list of strings
-    char errors[64][256];
-    int num_errors;
-} parser; 
-
-expr* parse_expression(parser*, precedence);
-stmt parse_statement(parser*);
-env_map* new_env_map();
+#include "parser.h"
 
 
 void next_parser_token(parser* p) {
@@ -121,7 +102,7 @@ expr* parse_prefix(parser* p) {
     ex->type = PREFIX_EXPR;
     struct prefix_expr pre;
 
-    pre.operator = p->cur_token;
+    pre.op = p->cur_token;
 
     next_parser_token(p);
 
@@ -137,12 +118,12 @@ expr* parse_infix(parser* p, expr* left) {
     ex->type = INFIX_EXPR;
     struct infix_expr inf;
 
-    inf.operator = p->cur_token;
+    inf.op = p->cur_token;
     inf.left = left;
 
     next_parser_token(p);
 
-    inf.right = parse_expression(p, get_precedence(inf.operator));
+    inf.right = parse_expression(p, get_precedence(inf.op));
 
     ex->data.inf = inf;
     return ex;
@@ -457,6 +438,3 @@ stmt_list parse_program(parser* p) {
 
     return prog;
 }
-
-
-#endif

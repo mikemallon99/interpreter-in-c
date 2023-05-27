@@ -1,13 +1,6 @@
-#ifndef _ASTC_
-#define _ASTC_
-
 #include <stdlib.h>
-#include "../tokens.c"
-#include "expressions.c"
 
-typedef enum {
-    LOWEST_PR, EQUALS_PR, LESSGREATER_PR, SUM_PR, PRODUCT_PR, PREFIX_PR, CALL_PR
-} precedence;
+#include "ast.h"
 
 precedence get_precedence(token t) {
     switch (t.type) {
@@ -33,6 +26,3 @@ precedence get_precedence(token t) {
             return LOWEST_PR;
     }
 }
-
-
-#endif

@@ -1,43 +1,10 @@
-#ifndef _STATEMENTSC_
-#define _STATEMENTSC_
-
 #include <stdlib.h>
-#include "../tokens.c"
+#include <string.h>
+#include <stdio.h>
+
+#include "statements.h"
 
 // STATEMENT DATATYPES & FUNCTIONS
-
-typedef struct expr expr;
-char* expression_string(expr*);
-
-typedef enum {
-    LET_STMT, RETURN_STMT, EXPR_STMT, NULL_STMT
-} stmt_type;
-
-typedef struct {
-    token identifier;
-    expr* value;
-} let_stmt;
-
-typedef struct {
-    expr* value;
-} return_stmt;
-
-typedef struct {
-    expr* value;
-} expr_stmt;
-
-typedef union {
-    let_stmt let;
-    return_stmt ret;
-    expr_stmt expr;
-} stmt_data;
-
-typedef struct {
-    stmt_type type;
-    stmt_data data;
-} stmt;
-
-
 char* statement_string(stmt* s) {
     char* expr_str;
     char* stmt_str = malloc(128);
@@ -68,12 +35,6 @@ char* statement_string(stmt* s) {
 
 
 // STATEMENT DYNAMIC ARRAY
-typedef struct stmt_list {
-    stmt* statements;
-    size_t count;
-    size_t capacity;
-} stmt_list;
-
 stmt_list new_stmt_list() {
     stmt_list new_list;
     new_list.capacity = 1;
@@ -106,6 +67,3 @@ char* program_string(stmt_list* p) {
     
     return stmt_str;
 }
-
-
-#endif

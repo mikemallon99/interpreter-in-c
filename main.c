@@ -1,4 +1,4 @@
-#include "repl/repl.c"
+#include "repl/repl.h"
 
 int main() {
     start();

@@ -1,17 +1,8 @@
-#ifndef _LEXERC_
-#define _LEXERC_
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "../tokens.c"
 
-typedef struct {
-    char* input_string;
-    int position;
-    int read_position;
-    char cur_byte;
-} lexer;
+#include "lexer.h"
 
 char peek_char(lexer* l) {
     if (l->read_position >= strlen(l->input_string)) {
@@ -196,5 +187,3 @@ token next_lexer_token(lexer* l) {
     read_char(l);
     return t;
 }
-
-#endif

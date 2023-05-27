@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdbool.h>
-#include "lexer.c"
+#include "lexer.h"
 
 void test_simple() {
     char input[] = "=+(){},;";

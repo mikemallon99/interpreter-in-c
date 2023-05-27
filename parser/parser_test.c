@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include "parser.c"
+#include "parser.h"
 
 bool test_let_statement(stmt s, char* name) {
     if (s.type != LET_STMT) {

@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <stdbool.h>
-#include "../lexer/lexer.c"
-#include "../parser/parser.c"
+#include "../lexer/lexer.h"
+#include "../parser/parser.h"
 
 bool test_program_string() {
     // Input string into program and assert that the same string comes out
@@ -219,7 +219,7 @@ bool test_prefix_expr() {
     assert(ex->type == PREFIX_EXPR);
 
     struct prefix_expr pre = ex->data.pre;
-    assert(pre.operator.type == MINUS);
+    assert(pre.op.type == MINUS);
 
     test_int_literal(pre.right, 12);
 
@@ -248,7 +248,7 @@ bool test_infix_expr() {
     assert(left->type == PREFIX_EXPR);
 
     struct prefix_expr pre = left->data.pre;
-    assert(pre.operator.type == MINUS);
+    assert(pre.op.type == MINUS);
 
     assert(pre.right->type == LITERAL_EXPR);
     assert(pre.right->data.lit.type == INT_LIT);
@@ -265,7 +265,7 @@ bool test_infix_expr() {
     assert(lit_right.data.i == 5);
 
     // Operator
-    assert(ex->data.inf.operator.type == ASTERISK);
+    assert(ex->data.inf.op.type == ASTERISK);
 
     char* prog_str = program_string(&prog);
     printf("test_infix_expr: %s\n", prog_str);

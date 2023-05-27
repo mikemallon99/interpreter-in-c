@@ -1,25 +1,13 @@
-#ifndef _EVALC_
-#define _EVALC_
-
-#include "../ast/expressions.c"
-#include "../parser/statements.c"
 #include <assert.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdarg.h>
 #include <string.h>
 
+#include "eval.h"
+
 #define ENV_MAP_SIZE 128
 
-
-typedef enum {
-    LIT_OBJ, RET_OBJ, ERR_OBJ
-} object_type;
-
-typedef struct object {
-    object_type type;
-    literal lit;
-    char* err;
-} object;
 
 object create_null_obj() {
     object null;
@@ -56,18 +44,6 @@ bool is_error(object obj) {
 bool is_function(object obj) {
     return obj.lit.type == FN_LIT;
 }
-
-typedef struct env_map {
-    char* key;
-    object value;
-} env_map;
-
-typedef struct environment {
-    env_map* inner;
-    environment* outer;
-} environment;
-
-object eval_program(stmt_list* p, environment* env);
 
 env_map* new_env_map() {
     return (env_map*)calloc(ENV_MAP_SIZE, sizeof(env_map));
@@ -306,7 +282,7 @@ object eval_expr(expr* e, environment* env) {
             if (is_error(out)) {
                 return out;
             }
-            return eval_prefix(e->data.pre.operator, out);
+            return eval_prefix(e->data.pre.op, out);
         case INFIX_EXPR:
             left = eval_expr(e->data.inf.left, env);
             if (is_error(left)) {
@@ -316,7 +292,7 @@ object eval_expr(expr* e, environment* env) {
             if (is_error(right)) {
                 return right;
             }
-            return eval_infix(e->data.inf.operator, left, right);
+            return eval_infix(e->data.inf.op, left, right);
         case IF_EXPR:
             out = eval_expr(e->data.ifelse.condition, env);
             if (is_error(out)) {
@@ -398,6 +374,3 @@ object eval_program(stmt_list* p, environment* env) {
 
     return out;
 }
-
-
-#endif

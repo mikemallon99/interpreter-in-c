@@ -1,6 +1,9 @@
-#include "../parser/parser.c"
 #include <assert.h>
-#include "eval.c"
+#include <stdio.h>
+#include <string.h>
+
+#include "../parser/parser.h"
+#include "eval.h"
 
 object get_prog_output(char* input_str) {
     lexer l = get_lexer(input_str);

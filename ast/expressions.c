@@ -1,28 +1,10 @@
-#ifndef _EXPRESSIONSC_
-#define _EXPRESSIONSC_
-
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#include "../tokens.c"
-#include "../parser/statements.c"
-#include "../eval/eval.c"
 
-typedef struct expr expr;
-typedef struct environment environment;
+#include "expressions.h"
 
-char* expression_string(expr*);
-
-typedef enum {
-    INT_LIT, BOOL_LIT, IDENT_LIT, FN_LIT, NULL_LIT,
-} literal_type;
-
-
-typedef struct token_list {
-    token* tokens;
-    size_t count;
-    size_t capacity;
-} token_list;
 
 token_list new_token_list() {
     token_list new_list;
@@ -61,11 +43,6 @@ char* token_list_string(token_list* tl) {
 }
 
 
-typedef struct expr_list {
-    expr** exprs;
-    size_t count;
-    size_t capacity;
-} expr_list;
 
 expr_list new_expr_list() {
     expr_list new_list;
@@ -102,65 +79,6 @@ char* expr_list_string(expr_list* el) {
     free(tmp_str);
     return el_str;
 }
-
-
-struct fn_lit {
-    token_list params;
-    stmt_list body;
-    environment* env;
-};
-
-typedef union {
-    int i;
-    bool b;
-    token t;
-    struct fn_lit fn;
-} literal_data;
-
-typedef struct {
-    literal_type type;
-    literal_data data;
-} literal;
-
-typedef enum {
-    INFIX_EXPR, PREFIX_EXPR, LITERAL_EXPR, IF_EXPR, CALL_EXPR
-} expr_type;
-
-struct infix_expr {
-    token operator;
-    expr* left;
-    expr* right;
-};
-
-struct prefix_expr {
-    token operator;
-    expr* right;
-};
-
-struct if_expr {
-    expr* condition;
-    stmt_list consequence;
-    bool has_alt;
-    stmt_list alternative;
-};
-
-struct call_expr {
-    expr* func;
-    expr_list args;
-};
-
-typedef union {
-    struct infix_expr inf;
-    struct prefix_expr pre;
-    struct if_expr ifelse;
-    struct call_expr call;
-    literal lit;
-} expr_data;
-
-typedef struct expr {
-    expr_type type;
-    expr_data data;
-} expr;
 
 
 char* literal_string(literal lit) {
@@ -214,7 +132,7 @@ char* lit_type_string(literal lit) {
 char* prefix_string(struct prefix_expr pre) {
     char* pre_str = malloc(128);
 
-    sprintf(pre_str, "%s%s", pre.operator.value, expression_string(pre.right));
+    sprintf(pre_str, "%s%s", pre.op.value, expression_string(pre.right));
 
     return pre_str;
 }
@@ -223,7 +141,7 @@ char* prefix_string(struct prefix_expr pre) {
 char* infix_string(struct infix_expr inf) {
     char* inf_str = malloc(128);
 
-    sprintf(inf_str, "(%s %s %s)", expression_string(inf.left), inf.operator.value, expression_string(inf.right));
+    sprintf(inf_str, "(%s %s %s)", expression_string(inf.left), inf.op.value, expression_string(inf.right));
 
     return inf_str;
 }
@@ -272,5 +190,3 @@ char* expression_string(expr* e) {
             return expr_str;
     }
 }
-
-#endif

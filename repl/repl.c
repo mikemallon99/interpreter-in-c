@@ -1,11 +1,10 @@
-#ifndef _REPLC_
-#define _REPLC_
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "../parser/parser.c"
-#include "../eval/eval.c"
+
+#include "repl.h"
+#include "../parser/parser.h"
+#include "../eval/eval.h"
 
 void start() {
     char input[100];
@@ -38,6 +37,3 @@ void start() {
 
     free(env.inner);
 }
-
-
-#endif

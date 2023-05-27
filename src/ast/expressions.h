@@ -87,9 +87,11 @@ typedef struct expr {
 
 token_list new_token_list();
 void append_token_list(token_list* cur_list, token new_token);
-char* token_list_string(token_list* tl);
+
 expr_list new_expr_list();
 void append_expr_list(expr_list* cur_list, expr* new_expr);
+
+char* token_list_string(token_list* tl);
 char* expr_list_string(expr_list* el);
 char* literal_string(literal lit);
 char* lit_type_string(literal lit);

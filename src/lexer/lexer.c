@@ -4,84 +4,40 @@
 
 #include "lexer.h"
 
-char peek_char(lexer* l) {
-    if (l->read_position >= strlen(l->input_string)) {
-        return 0;
-    } else {
-        return l->input_string[l->read_position];
-    }
-}
+char _peek_char(lexer* l);
 
-void read_char(lexer* l) {
-    if (l->read_position >= strlen(l->input_string)) {
-        l->cur_byte = 0;
-    } else {
-        l->cur_byte = l->input_string[l->read_position];
-    }
-    l->position = l->read_position;
-    l->read_position += 1;
-}
+void _read_char(lexer* l);
+char* _read_int(lexer* l);
+char* _read_identifier(lexer* l);
+
+bool _is_number(char cur_byte);
+bool _is_letter(char cur_byte);
+void _skip_whitespace(lexer* l);
+
+// PUBLIC FUNCTIONS
 
 lexer get_lexer(char* input_string) {
     lexer l;
     l.input_string = input_string;
     l.read_position = 0;
     l.position = 0;
-    read_char(&l);
+    _read_char(&l);
     return l;
-}
-
-bool is_number(char cur_byte) {
-    return (cur_byte >= '0' && cur_byte <= '9');
-}
-
-bool is_letter(char cur_byte) {
-    return ((cur_byte >= 'a' && cur_byte <= 'z') || (cur_byte >= 'A' && cur_byte <= 'Z') || cur_byte == '_');
-}
-
-char* read_identifier(lexer* l) {
-    int position = l->position;
-    while (is_letter(l->cur_byte) || is_number(l->cur_byte)) {
-        read_char(l);
-    }
-    // Need to allocate memory for new char array here
-    int id_len = l->position - position;
-    char* identifier = (char*)calloc(id_len+1, 1);
-    strncpy(identifier, l->input_string + position, id_len);
-    return identifier;
-}
-
-char* read_int(lexer* l) {
-    int position = l->position;
-    while (is_number(l->cur_byte)) {
-        read_char(l);
-    }
-    // Need to allocate memory for new char array here
-    int id_len = l->position - position;
-    char* identifier = (char*)calloc(id_len, 1);
-    strncpy(identifier, l->input_string + position, id_len);
-    return identifier;
-}
-
-void skip_whitespace(lexer* l) {
-    while (l->cur_byte == ' ' || l->cur_byte == '\n') {
-        read_char(l);
-    }
 }
 
 token next_lexer_token(lexer* l) {
     token t;
     char* char_str;
 
-    skip_whitespace(l);
+    _skip_whitespace(l);
 
     // Read token
     switch (l->cur_byte) {
         case '=':
-            if (peek_char(l) == '=') {
+            if (_peek_char(l) == '=') {
                 char_str = calloc(3, 1);
                 char_str[0] = l->cur_byte;
-                read_char(l);
+                _read_char(l);
                 char_str[1] = l->cur_byte;
                 t = (token){EQ, char_str};
             } else {
@@ -101,10 +57,10 @@ token next_lexer_token(lexer* l) {
             t = (token){MINUS, char_str};
             break;
         case '!':
-            if (peek_char(l) == '=') {
+            if (_peek_char(l) == '=') {
                 char_str = calloc(3, 1);
                 char_str[0] = l->cur_byte;
-                read_char(l);
+                _read_char(l);
                 char_str[1] = l->cur_byte;
                 t = (token){NOT_EQ, char_str};
             } else {
@@ -169,13 +125,13 @@ token next_lexer_token(lexer* l) {
             t = (token){EOF_T, char_str};
             break;
         default:
-            if (is_letter(l->cur_byte)) {
+            if (_is_letter(l->cur_byte)) {
                 // Return early since we dont want to advance the next char
-                char* identifier = read_identifier(l);
+                char* identifier = _read_identifier(l);
                 return (token){lookup_ident(identifier), identifier};
-            } else if (is_number(l->cur_byte)) {
+            } else if (_is_number(l->cur_byte)) {
                 // Return early since we dont want to advance the next char
-                char* identifier = read_int(l);
+                char* identifier = _read_int(l);
                 return (token){INT, identifier};
             } else {
                 char_str = calloc(2, 1);
@@ -184,6 +140,64 @@ token next_lexer_token(lexer* l) {
             }
     }
 
-    read_char(l);
+    _read_char(l);
     return t;
+}
+
+// PRIVATE FUNCTIONS
+
+char _peek_char(lexer* l) {
+    if (l->read_position >= strlen(l->input_string)) {
+        return 0;
+    } else {
+        return l->input_string[l->read_position];
+    }
+}
+
+void _read_char(lexer* l) {
+    if (l->read_position >= strlen(l->input_string)) {
+        l->cur_byte = 0;
+    } else {
+        l->cur_byte = l->input_string[l->read_position];
+    }
+    l->position = l->read_position;
+    l->read_position += 1;
+}
+
+bool _is_number(char cur_byte) {
+    return (cur_byte >= '0' && cur_byte <= '9');
+}
+
+bool _is_letter(char cur_byte) {
+    return ((cur_byte >= 'a' && cur_byte <= 'z') || (cur_byte >= 'A' && cur_byte <= 'Z') || cur_byte == '_');
+}
+
+char* _read_identifier(lexer* l) {
+    int position = l->position;
+    while (_is_letter(l->cur_byte) || _is_number(l->cur_byte)) {
+        _read_char(l);
+    }
+    // Need to allocate memory for new char array here
+    int id_len = l->position - position;
+    char* identifier = (char*)calloc(id_len+1, 1);
+    strncpy(identifier, l->input_string + position, id_len);
+    return identifier;
+}
+
+char* _read_int(lexer* l) {
+    int position = l->position;
+    while (_is_number(l->cur_byte)) {
+        _read_char(l);
+    }
+    // Need to allocate memory for new char array here
+    int id_len = l->position - position;
+    char* identifier = (char*)calloc(id_len, 1);
+    strncpy(identifier, l->input_string + position, id_len);
+    return identifier;
+}
+
+void _skip_whitespace(lexer* l) {
+    while (l->cur_byte == ' ' || l->cur_byte == '\n') {
+        _read_char(l);
+    }
 }

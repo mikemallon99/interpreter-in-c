@@ -6,8 +6,10 @@
 #include <stdbool.h>
 #include "../tokens.c"
 #include "../parser/statements.c"
+#include "../eval/eval.c"
 
 typedef struct expr expr;
+typedef struct environment environment;
 
 char* expression_string(expr*);
 
@@ -105,6 +107,7 @@ char* expr_list_string(expr_list* el) {
 struct fn_lit {
     token_list params;
     stmt_list body;
+    environment* env;
 };
 
 typedef union {

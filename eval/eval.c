@@ -53,15 +53,24 @@ bool is_error(object obj) {
     return obj.type == ERR_OBJ;
 }
 
+bool is_function(object obj) {
+    return obj.lit.type == FN_LIT;
+}
+
 typedef struct env_map {
     char* key;
     object value;
 } env_map;
 
-object eval_program(stmt_list* p, env_map* env);
+typedef struct environment {
+    env_map* inner;
+    environment* outer;
+} environment;
+
+object eval_program(stmt_list* p, environment* env);
 
 env_map* new_env_map() {
-    return (env_map*)malloc(sizeof(env_map) * ENV_MAP_SIZE);
+    return (env_map*)calloc(ENV_MAP_SIZE, sizeof(env_map));
 }
 
 // Found a random string hash function
@@ -81,12 +90,25 @@ void insert_env(env_map* map, char* key, object val) {
 
 object get_env(env_map* map, char* key) {
     env_map entry = map[get_hash_env(key)];
-    if (strcmp(entry.key, key) == 0) {
+    if (entry.key == NULL) {
+        return create_err_obj("tried to lookup identifier %s which does not exist", key);
+    }
+    else if (strcmp(entry.key, key) == 0) {
         return map[get_hash_env(key)].value;
     }
     else {
-        return create_err_obj("tried to lookup identifier %s which does not exist", key);
+        return create_err_obj("tried to lookup identifier %s but found collision", key);
     }
+}
+
+
+object get_literal(environment* env, char* key) {
+    object val;
+    val = get_env(env->inner, key);
+    if (val.type == ERR_OBJ && env->outer != NULL) {
+        return get_literal(env->outer, key);
+    }
+    return val;
 }
 
 
@@ -263,15 +285,20 @@ object eval_infix(token op, object left, object right) {
 }
 
 
-object eval_expr(expr* e, env_map* env) {
+object eval_expr(expr* e, environment* env) {
     object out;
     object left, right;
+    object func;
+    expr_list args;
 
     switch (e->type) {
         case LITERAL_EXPR:
             // Resolve any identifier
             if (e->data.lit.type == IDENT_LIT) {
-                return get_env(env, e->data.lit.data.t.value);
+                return get_literal(env, e->data.lit.data.t.value);
+            }
+            else if (e->data.lit.type == FN_LIT) {
+                e->data.lit.data.fn.env->outer = env;
             }
             return create_lit_obj(e->data.lit);
         case PREFIX_EXPR:
@@ -306,13 +333,33 @@ object eval_expr(expr* e, env_map* env) {
             } else {
                 return create_null_obj();
             }
+        case CALL_EXPR:
+            func = eval_expr(e->data.call.func, env);
+            if (is_error(func)) {
+                return func;
+            }
+            
+            args = e->data.call.args;
+            if (args.count != func.lit.data.fn.params.count) {
+                create_err_obj("arg mismatch, input: %d fn: %d", args.count, func.lit.data.fn.params.count);
+            }
+
+            func.lit.data.fn.env->inner = new_env_map();
+            for (int i = 0; i < args.count; i++) {
+                out = eval_expr(args.exprs[i], env);
+                if (is_error(out)) {
+                    return out;
+                }
+                insert_env(func.lit.data.fn.env->inner, func.lit.data.fn.params.tokens[i].value, out);
+            }
+            return eval_program(&func.lit.data.fn.body, func.lit.data.fn.env);
         default:
             return create_null_obj();
     }
 }
 
 
-object eval_stmt(stmt* s, env_map* env) {
+object eval_stmt(stmt* s, environment* env) {
     object out;
 
     switch (s->type) {
@@ -330,8 +377,8 @@ object eval_stmt(stmt* s, env_map* env) {
             out = eval_expr(s->data.let.value, env);
             if (is_error(out)) {
                 return out;
-            }
-            insert_env(env, s->data.let.identifier.value, out);
+            } 
+            insert_env(env->inner, s->data.let.identifier.value, out);
             return create_null_obj();
         default:
             return create_null_obj();
@@ -339,7 +386,7 @@ object eval_stmt(stmt* s, env_map* env) {
 }
 
 
-object eval_program(stmt_list* p, env_map* env) {
+object eval_program(stmt_list* p, environment* env) {
     object out;
 
     for (int i = 0; i < p->count; i++) {

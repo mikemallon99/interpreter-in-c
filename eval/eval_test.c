@@ -6,9 +6,10 @@ object get_prog_output(char* input_str) {
     lexer l = get_lexer(input_str);
     parser p = new_parser(&l);
     stmt_list prog = parse_program(&p);
-    env_map* env = new_env_map();
-    object out = eval_program(&prog, env);
-    free(env);
+    environment env;
+    env_map* inner = new_env_map();
+    env.inner = inner;
+    object out = eval_program(&prog, &env);
 
     return out;
 }
@@ -17,9 +18,10 @@ bool assert_prog_output(char* input_str, literal exp_val) {
     lexer l = get_lexer(input_str);
     parser p = new_parser(&l);
     stmt_list prog = parse_program(&p);
-    env_map* env = new_env_map();
-    object out = eval_program(&prog, env);
-    free(env);
+    environment env;
+    env_map* inner = new_env_map();
+    env.inner = inner;
+    object out = eval_program(&prog, &env);
 
     printf("%s: %s\n", input_str, literal_string(out.lit));
 
@@ -156,6 +158,19 @@ bool test_eval_error() {
     printf("%s: %s", input_str_5, out.err);
 }
 
+bool test_eval_fn() {
+    char input_str[] = 
+    "let closure_fn = fn(x){ fn(y) {x + y}};"
+    "let add_2 = closure_fn(2);"
+    "add_2(4);";
+
+    literal exp_val;
+
+    exp_val.type = INT_LIT;
+    exp_val.data.i = 6;
+    assert_prog_output(input_str, exp_val);
+}
+
 int main() {
     test_eval_int();
     test_eval_let();
@@ -164,5 +179,6 @@ int main() {
     test_eval_ifelse();
     test_eval_return();
     test_eval_error();
+    test_eval_fn();
     return 0;
 }

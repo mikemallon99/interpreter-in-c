@@ -2,6 +2,7 @@
 #define _PARSERC_
 
 #include "../lexer/lexer.c"
+#include "../eval/eval.c"
 #include "statements.c"
 #include "../ast/ast.c"
 #include <stdlib.h>
@@ -18,6 +19,7 @@ typedef struct {
 
 expr* parse_expression(parser*, precedence);
 stmt parse_statement(parser*);
+env_map* new_env_map();
 
 
 void next_parser_token(parser* p) {
@@ -303,6 +305,9 @@ expr* parse_fn(parser* p) {
     next_parser_token(p);
 
     fn_data.body = parse_block_stmt(p);
+    // Create an environment for functions to support closures
+    // closure_fn = fn(x) { fn(y) { x + y }}
+    fn_data.env = new_env_map();
 
     lit.data.fn = fn_data;
     ex->data.lit = lit;

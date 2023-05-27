@@ -28,7 +28,12 @@ set(Sources
   src/ast/expressions.c
 )
 
+set(Tests
+  tests/all_tests.c
+)
+
 add_library(${This}_lib STATIC ${Sources} ${Headers})
 target_include_directories(${This}_lib PUBLIC src)
 
 add_executable(${This} ${Sources} ${Headers} src/main.c)
+add_executable(run_tests ${Tests} ${Sources} ${Headers})

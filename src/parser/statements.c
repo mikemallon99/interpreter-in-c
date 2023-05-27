@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "statements.h"
+#include "../ast/expressions.h"
 
 // STATEMENT DATATYPES & FUNCTIONS
 char* statement_string(stmt* s) {

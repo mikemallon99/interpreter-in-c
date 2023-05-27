@@ -1,9 +1,12 @@
+#ifndef _EVALTESTC_
+#define _EVALTESTC_
+
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "../parser/parser.h"
-#include "eval.h"
+#include "../src/parser/parser.h"
+#include "../src/eval/eval.h"
 
 object get_prog_output(char* input_str) {
     lexer l = get_lexer(input_str);
@@ -174,7 +177,7 @@ bool test_eval_fn() {
     assert_prog_output(input_str, exp_val);
 }
 
-int main() {
+void run_all_eval_tests() {
     test_eval_int();
     test_eval_let();
     test_eval_prefix();
@@ -183,5 +186,6 @@ int main() {
     test_eval_return();
     test_eval_error();
     test_eval_fn();
-    return 0;
 }
+
+#endif 

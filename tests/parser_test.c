@@ -1,7 +1,13 @@
+#ifndef _PARSERTESTC_
+#define _PARSERTESTC_
+
 #include <assert.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include "parser.h"
+
+#include "../src/parser/parser.h"
+#include "../src/ast/expressions.h"
 
 bool test_let_statement(stmt s, char* name) {
     if (s.type != LET_STMT) {
@@ -87,7 +93,7 @@ bool test_return_statements() {
 
 bool test_program_string() {
     // Create let statement from raw tokens
-    expression expr_data; 
+    expr expr_data; 
     let_stmt let = {{IDENT, "my_var"}, &expr_data};
     stmt let_stmt;
     let_stmt.type = LET_STMT;
@@ -105,10 +111,11 @@ bool test_program_string() {
     return true;
 }
 
-int main() {
+void run_all_parser_tests() {
     assert(test_let_statements());
     assert(test_bad_let_statements());
     assert(test_return_statements());
     assert(test_program_string());
-    return 0;
 }
+
+#endif

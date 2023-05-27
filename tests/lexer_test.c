@@ -1,8 +1,13 @@
+#ifndef _LEXERTESTC_
+#define _LEXERTESTC_
+
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
 #include <stdbool.h>
-#include "lexer.h"
+
+#include "../src/lexer/lexer.h"
 
 void test_simple() {
     char input[] = "=+(){},;";
@@ -169,11 +174,12 @@ void test_code() {
     }
 }
 
-int main() {
+void run_all_lexer_tests() {
     printf("Test Simple:\n");
     test_simple();
 
     printf("Test Code:\n");
     test_code();
-    return 0;
 }
+
+#endif

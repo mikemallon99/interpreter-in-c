@@ -1,9 +1,15 @@
-#include <assert.h>
-#include <stdbool.h>
-#include "../lexer/lexer.h"
-#include "../parser/parser.h"
+#ifndef _ASTTESTC_
+#define _ASTTESTC_
 
-bool test_program_string() {
+#include <assert.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdbool.h>
+
+#include "../src/lexer/lexer.h"
+#include "../src/parser/parser.h"
+
+bool test_program_string_ast() {
     // Input string into program and assert that the same string comes out
     char input_str[] = "let my_var = another_var;";
     lexer l = get_lexer(input_str);
@@ -291,8 +297,8 @@ bool test_infix_expr_2() {
     return true;
 }
 
-int main() {
-    assert(test_program_string());
+void run_all_ast_tests() {
+    assert(test_program_string_ast());
     test_identifier_expr();
     test_int_expr();
     test_bool_expr();
@@ -303,5 +309,6 @@ int main() {
     test_fn_expr();
     test_call_expr_1();
     test_call_expr_2();
-    return 0;
 }
+
+#endif

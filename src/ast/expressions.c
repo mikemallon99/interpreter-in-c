@@ -9,26 +9,26 @@ token_list new_token_list()
 {
     token_list new_list;
     new_list.capacity = 1;
-    new_list.tokens = (token *)malloc(new_list.capacity * sizeof(token));
+    new_list.tokens = (token*)malloc(new_list.capacity * sizeof(token));
     new_list.count = 0;
     return new_list;
 }
 
-void append_token_list(token_list *cur_list, token new_token)
+void append_token_list(token_list* cur_list, token new_token)
 {
     if ((cur_list->count) >= cur_list->capacity)
     {
-        cur_list->tokens = (token *)realloc(cur_list->tokens, cur_list->capacity * 2 * sizeof(token));
+        cur_list->tokens = (token*)realloc(cur_list->tokens, cur_list->capacity * 2 * sizeof(token));
         cur_list->capacity *= 2;
     }
     cur_list->tokens[cur_list->count] = new_token;
     cur_list->count++;
 }
 
-char *token_list_string(token_list *tl)
+char* token_list_string(token_list* tl)
 {
-    char *tl_str = malloc(128);
-    char *tmp_str = malloc(128);
+    char* tl_str = malloc(128);
+    char* tmp_str = malloc(128);
     strcpy(tl_str, "");
 
     for (int i = 0; i < tl->count; i++)
@@ -53,26 +53,26 @@ expr_list new_expr_list()
 {
     expr_list new_list;
     new_list.capacity = 1;
-    new_list.exprs = (expr **)malloc(new_list.capacity * sizeof(expr *));
+    new_list.exprs = (expr**)malloc(new_list.capacity * sizeof(expr*));
     new_list.count = 0;
     return new_list;
 }
 
-void append_expr_list(expr_list *cur_list, expr *new_expr)
+void append_expr_list(expr_list* cur_list, expr* new_expr)
 {
     if ((cur_list->count) >= cur_list->capacity)
     {
-        cur_list->exprs = (expr **)realloc(cur_list->exprs, cur_list->capacity * 2 * sizeof(expr *));
+        cur_list->exprs = (expr**)realloc(cur_list->exprs, cur_list->capacity * 2 * sizeof(expr*));
         cur_list->capacity *= 2;
     }
     cur_list->exprs[cur_list->count] = new_expr;
     cur_list->count++;
 }
 
-char *expr_list_string(expr_list *el)
+char* expr_list_string(expr_list* el)
 {
-    char *el_str = malloc(128);
-    char *tmp_str = malloc(128);
+    char* el_str = malloc(128);
+    char* tmp_str = malloc(128);
     strcpy(el_str, "");
 
     for (int i = 0; i < el->count; i++)
@@ -93,9 +93,9 @@ char *expr_list_string(expr_list *el)
     return el_str;
 }
 
-char *literal_string(literal lit)
+char* literal_string(literal lit)
 {
-    char *lit_str = malloc(128);
+    char* lit_str = malloc(128);
 
     switch (lit.type)
     {
@@ -118,9 +118,9 @@ char *literal_string(literal lit)
     return lit_str;
 }
 
-char *lit_type_string(literal lit)
+char* lit_type_string(literal lit)
 {
-    char *lit_str = malloc(64);
+    char* lit_str = malloc(64);
 
     switch (lit.type)
     {
@@ -143,27 +143,27 @@ char *lit_type_string(literal lit)
     return lit_str;
 }
 
-char *prefix_string(struct prefix_expr pre)
+char* prefix_string(struct prefix_expr pre)
 {
-    char *pre_str = malloc(128);
+    char* pre_str = malloc(128);
 
     sprintf(pre_str, "%s%s", pre.op.value, expression_string(pre.right));
 
     return pre_str;
 }
 
-char *infix_string(struct infix_expr inf)
+char* infix_string(struct infix_expr inf)
 {
-    char *inf_str = malloc(128);
+    char* inf_str = malloc(128);
 
     sprintf(inf_str, "(%s %s %s)", expression_string(inf.left), inf.op.value, expression_string(inf.right));
 
     return inf_str;
 }
 
-char *if_string(struct if_expr ifelse)
+char* if_string(struct if_expr ifelse)
 {
-    char *if_str = malloc(128);
+    char* if_str = malloc(128);
 
     if (ifelse.has_alt)
     {
@@ -177,18 +177,18 @@ char *if_string(struct if_expr ifelse)
     return if_str;
 }
 
-char *call_string(struct call_expr call)
+char* call_string(struct call_expr call)
 {
-    char *call_str = malloc(128);
+    char* call_str = malloc(128);
 
     sprintf(call_str, "%s(%s)", expression_string(call.func), expr_list_string(&call.args));
 
     return call_str;
 }
 
-char *expression_string(expr *e)
+char* expression_string(expr* e)
 {
-    char *expr_str;
+    char* expr_str;
 
     switch (e->type)
     {

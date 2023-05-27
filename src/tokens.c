@@ -4,7 +4,7 @@
 
 #include "tokens.h"
 
-token_type lookup_ident(char *ident)
+token_type lookup_ident(char* ident)
 {
     if (strcmp(ident, "fn") == 0)
     {
@@ -40,9 +40,9 @@ token_type lookup_ident(char *ident)
     }
 }
 
-char *get_token_type_string(token_type t)
+char* get_token_type_string(token_type t)
 {
-    char *token_string = calloc(10, 1);
+    char* token_string = calloc(10, 1);
 
     switch (t)
     {

@@ -10,16 +10,16 @@
 
 object _create_null_obj();
 object _create_lit_obj(literal l);
-object _create_err_obj(const char *format, ...);
+object _create_err_obj(const char* format, ...);
 
 bool _is_function(object obj);
 bool _is_error(object obj);
 object _cast_as_bool(object l);
 
-int _get_hash_env(char *str);
-void _insert_env(env_map *map, char *key, object val);
-object _get_env(env_map *map, char *key);
-object _get_literal(environment *env, char *key);
+int _get_hash_env(char* str);
+void _insert_env(env_map* map, char* key, object val);
+object _get_env(env_map* map, char* key);
+object _get_literal(environment* env, char* key);
 
 object _lit_gt(object left, object right);
 object _lit_lt(object left, object right);
@@ -27,17 +27,17 @@ object _lit_eq(object left, object right);
 object _lit_neq(object left, object right);
 object _eval_prefix(token op, object right);
 object _eval_infix(token op, object left, object right);
-object _eval_expr(expr *e, environment *env);
-object _eval_stmt(stmt *s, environment *env);
+object _eval_expr(expr* e, environment* env);
+object _eval_stmt(stmt* s, environment* env);
 
 // PUBLIC FUNCTIONS
 
-env_map *new_env_map()
+env_map* new_env_map()
 {
-    return (env_map *)calloc(ENV_MAP_SIZE, sizeof(env_map));
+    return (env_map* )calloc(ENV_MAP_SIZE, sizeof(env_map));
 }
 
-object eval_program(stmt_list *p, environment *env)
+object eval_program(stmt_list* p, environment* env)
 {
     object out;
 
@@ -71,12 +71,12 @@ object _create_lit_obj(literal l)
     return obj;
 }
 
-object _create_err_obj(const char *format, ...)
+object _create_err_obj(const char* format, ...)
 {
     object obj;
     obj.type = ERR_OBJ;
 
-    char *buffer = malloc(256);
+    char* buffer = malloc(256);
     va_list args;
     va_start(args, format);
     vsprintf(buffer, format, args);
@@ -96,22 +96,22 @@ bool _is_function(object obj)
 }
 
 // Found a random string hash function
-int _get_hash_env(char *str)
+int _get_hash_env(char* str)
 {
     int hash = 5381;
     int c;
-    while ((c = *str++))
-        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+    while ((c =* str++))
+        hash = ((hash << 5) + hash) + c; /* hash*  33 + c */
     return hash % ENV_MAP_SIZE;
 }
 
-void _insert_env(env_map *map, char *key, object val)
+void _insert_env(env_map* map, char* key, object val)
 {
     env_map entry = {key, val};
     map[_get_hash_env(key)] = entry;
 }
 
-object _get_env(env_map *map, char *key)
+object _get_env(env_map* map, char* key)
 {
     env_map entry = map[_get_hash_env(key)];
     if (entry.key == NULL)
@@ -128,7 +128,7 @@ object _get_env(env_map *map, char *key)
     }
 }
 
-object _get_literal(environment *env, char *key)
+object _get_literal(environment* env, char* key)
 {
     object val;
     val = _get_env(env->inner, key);
@@ -304,7 +304,7 @@ object _eval_infix(token op, object left, object right)
         if (left.lit.type == INT_LIT)
         {
             out.lit.type = INT_LIT;
-            out.lit.data.i = left.lit.data.i * right.lit.data.i;
+            out.lit.data.i = left.lit.data.i*  right.lit.data.i;
             return out;
         }
         return _create_err_obj("operator not supported: %s", op.value);
@@ -329,7 +329,7 @@ object _eval_infix(token op, object left, object right)
     }
 }
 
-object _eval_expr(expr *e, environment *env)
+object _eval_expr(expr* e, environment* env)
 {
     object out;
     object left, right;
@@ -420,7 +420,7 @@ object _eval_expr(expr *e, environment *env)
     }
 }
 
-object _eval_stmt(stmt *s, environment *env)
+object _eval_stmt(stmt* s, environment* env)
 {
     object out;
 

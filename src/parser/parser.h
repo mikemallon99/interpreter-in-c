@@ -8,7 +8,7 @@
 
 typedef struct
 {
-    lexer *l;
+    lexer* l;
     token cur_token;
     token peek_token;
     // This needs to be a list of strings
@@ -16,8 +16,8 @@ typedef struct
     int num_errors;
 } parser;
 
-parser new_parser(lexer *l);
-stmt_list parse_program(parser *p);
-bool check_parser_errors(parser *p);
+parser new_parser(lexer* l);
+stmt_list parse_program(parser* p);
+bool check_parser_errors(parser* p);
 
 #endif

@@ -14,7 +14,7 @@ void start()
     stmt_list prog;
     object out;
     environment env;
-    env_map *inner = new_env_map();
+    env_map* inner = new_env_map();
     env.inner = inner;
 
     while (true)

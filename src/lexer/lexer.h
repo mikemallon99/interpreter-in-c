@@ -7,13 +7,13 @@
 
 typedef struct
 {
-    char *input_string;
+    char* input_string;
     int position;
     int read_position;
     char cur_byte;
 } lexer;
 
-lexer get_lexer(char *input_string);
-token next_lexer_token(lexer *l);
+lexer get_lexer(char* input_string);
+token next_lexer_token(lexer* l);
 
 #endif

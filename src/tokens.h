@@ -45,10 +45,10 @@ typedef enum
 typedef struct
 {
     token_type type;
-    char *value;
+    char* value;
 } token;
 
-token_type lookup_ident(char *ident);
-char *get_token_type_string(token_type t);
+token_type lookup_ident(char* ident);
+char* get_token_type_string(token_type t);
 
 #endif

@@ -9,7 +9,7 @@
 #include "../src/parser/parser.h"
 #include "../src/ast/expressions.h"
 
-bool test_let_statement(stmt s, char *name)
+bool test_let_statement(stmt s, char* name)
 {
     if (s.type != LET_STMT)
     {
@@ -118,7 +118,7 @@ bool test_program_string()
         return false;
     }
 
-    char *prog_string = program_string(&prog);
+    char* prog_string = program_string(&prog);
     printf(prog_string);
     free(prog_string);
     return true;

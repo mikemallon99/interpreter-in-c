@@ -8,26 +8,26 @@
 #include "../src/parser/parser.h"
 #include "../src/eval/eval.h"
 
-object get_prog_output(char *input_str)
+object get_prog_output(char* input_str)
 {
     lexer l = get_lexer(input_str);
     parser p = new_parser(&l);
     stmt_list prog = parse_program(&p);
     environment env;
-    env_map *inner = new_env_map();
+    env_map* inner = new_env_map();
     env.inner = inner;
     object out = eval_program(&prog, &env);
 
     return out;
 }
 
-bool assert_prog_output(char *input_str, literal exp_val)
+bool assert_prog_output(char* input_str, literal exp_val)
 {
     lexer l = get_lexer(input_str);
     parser p = new_parser(&l);
     stmt_list prog = parse_program(&p);
     environment env;
-    env_map *inner = new_env_map();
+    env_map* inner = new_env_map();
     env.inner = inner;
     object out = eval_program(&prog, &env);
 
@@ -94,11 +94,11 @@ bool test_eval_infix()
 
     exp_val.type = INT_LIT;
     exp_val.data.i = 35;
-    assert_prog_output("5 * 5 + 10;", exp_val);
+    assert_prog_output("5*  5 + 10;", exp_val);
 
     exp_val.type = INT_LIT;
     exp_val.data.i = 75;
-    assert_prog_output("5 * (5 + 10);", exp_val);
+    assert_prog_output("5*  (5 + 10);", exp_val);
 
     exp_val.type = INT_LIT;
     exp_val.data.i = 20;

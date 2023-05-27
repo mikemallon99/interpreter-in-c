@@ -56,7 +56,7 @@ void test_simple()
 
 void test_code()
 {
-    char *input =
+    char* input =
         "let five = 5;\n"
         "let ten = 10;\n"
         "let add = fn(x, y) {\n"

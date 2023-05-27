@@ -2,31 +2,31 @@
 
 #include "parser.h"
 
-void _peek_error(parser *p, token_type cur_type);
-bool _cur_token_is(parser *p, token_type cur_type);
-bool _peek_token_is(parser *p, token_type peek_type);
-precedence _peek_precedence(parser *p);
-bool _expect_peek(parser *p, token_type peek_type);
-expr *_parse_literal(parser *p);
-expr *_parse_prefix(parser *p);
-expr *_parse_infix(parser *p, expr *left);
-expr *_parse_group(parser *p);
-stmt_list _parse_block_stmt(parser *p);
-expr *_parse_if(parser *p);
-token_list _parse_fn_params(parser *p);
-expr_list _parse_call_args(parser *p);
-expr *_parse_call(parser *p, expr *left);
-expr *_parse_fn(parser *p);
-expr *_parse_expression(parser *p, precedence prec);
-stmt _parse_let_statement(parser *p);
-stmt _parse_return_statement(parser *p);
-stmt _parse_expr_stmt(parser *p);
-stmt _parse_statement(parser *p);
-void _next_parser_token(parser *p);
+void _peek_error(parser* p, token_type cur_type);
+bool _cur_token_is(parser* p, token_type cur_type);
+bool _peek_token_is(parser* p, token_type peek_type);
+precedence _peek_precedence(parser* p);
+bool _expect_peek(parser* p, token_type peek_type);
+expr* _parse_literal(parser* p);
+expr* _parse_prefix(parser* p);
+expr* _parse_infix(parser* p, expr* left);
+expr* _parse_group(parser* p);
+stmt_list _parse_block_stmt(parser* p);
+expr* _parse_if(parser* p);
+token_list _parse_fn_params(parser* p);
+expr_list _parse_call_args(parser* p);
+expr* _parse_call(parser* p, expr* left);
+expr* _parse_fn(parser* p);
+expr* _parse_expression(parser* p, precedence prec);
+stmt _parse_let_statement(parser* p);
+stmt _parse_return_statement(parser* p);
+stmt _parse_expr_stmt(parser* p);
+stmt _parse_statement(parser* p);
+void _next_parser_token(parser* p);
 
 // PUBLIC FUNCTIONS
 
-parser new_parser(lexer *l)
+parser new_parser(lexer* l)
 {
     parser p;
     p.l = l;
@@ -39,7 +39,7 @@ parser new_parser(lexer *l)
     return p;
 }
 
-bool check_parser_errors(parser *p)
+bool check_parser_errors(parser* p)
 {
     if (p->num_errors == 0)
         return true;
@@ -52,7 +52,7 @@ bool check_parser_errors(parser *p)
     return false;
 }
 
-stmt_list parse_program(parser *p)
+stmt_list parse_program(parser* p)
 {
     stmt_list prog = new_stmt_list();
     stmt cur_stmt;
@@ -78,29 +78,35 @@ stmt_list parse_program(parser *p)
 
 // PRIVATE FUNCTIONS
 
-void _peek_error(parser *p, token_type cur_type)
+void _peek_error(parser* p, token_type cur_type)
 {
-    sprintf(p->errors[p->num_errors], "Expected next token to be %s but got %s instead.", get_token_type_string(cur_type), get_token_type_string(p->peek_token.type));
-    printf("ERROR: Expected next token to be %s but got %s instead.\n", get_token_type_string(cur_type), get_token_type_string(p->peek_token.type));
+    char* exp_token_str = get_token_type_string(cur_type);
+    char* actual_token_str = get_token_type_string(p->peek_token.type);
+
+    sprintf(p->errors[p->num_errors], "Expected next token to be %s but got %s instead.", exp_token_str, actual_token_str);
+    printf("ERROR: Expected next token to be %s but got %s instead.\n", exp_token_str, actual_token_str);
+
+    free(exp_token_str);
+    free(actual_token_str);
     p->num_errors++;
 }
 
-bool _cur_token_is(parser *p, token_type cur_type)
+bool _cur_token_is(parser* p, token_type cur_type)
 {
     return p->cur_token.type == cur_type;
 }
 
-bool _peek_token_is(parser *p, token_type peek_type)
+bool _peek_token_is(parser* p, token_type peek_type)
 {
     return p->peek_token.type == peek_type;
 }
 
-precedence _peek_precedence(parser *p)
+precedence _peek_precedence(parser* p)
 {
     return get_precedence(p->peek_token);
 }
 
-bool _expect_peek(parser *p, token_type peek_type)
+bool _expect_peek(parser* p, token_type peek_type)
 {
     if (_peek_token_is(p, peek_type))
     {
@@ -114,9 +120,9 @@ bool _expect_peek(parser *p, token_type peek_type)
     }
 }
 
-expr *_parse_literal(parser *p)
+expr* _parse_literal(parser* p)
 {
-    expr *ex = malloc(sizeof(expr));
+    expr* ex = malloc(sizeof(expr));
     ex->type = LITERAL_EXPR;
     literal lit;
 
@@ -147,9 +153,9 @@ expr *_parse_literal(parser *p)
     return ex;
 }
 
-expr *_parse_prefix(parser *p)
+expr* _parse_prefix(parser* p)
 {
-    expr *ex = malloc(sizeof(expr));
+    expr* ex = malloc(sizeof(expr));
     ex->type = PREFIX_EXPR;
     struct prefix_expr pre;
 
@@ -163,9 +169,10 @@ expr *_parse_prefix(parser *p)
     return ex;
 }
 
-expr *_parse_infix(parser *p, expr *left)
+
+expr* _parse_infix(parser* p, expr* left)
 {
-    expr *ex = malloc(sizeof(expr));
+    expr* ex = malloc(sizeof(expr));
     ex->type = INFIX_EXPR;
     struct infix_expr inf;
 
@@ -180,11 +187,11 @@ expr *_parse_infix(parser *p, expr *left)
     return ex;
 }
 
-expr *_parse_group(parser *p)
+expr* _parse_group(parser* p)
 {
     _next_parser_token(p);
 
-    expr *ex = _parse_expression(p, LOWEST_PR);
+    expr* ex = _parse_expression(p, LOWEST_PR);
 
     if (!_expect_peek(p, RPAREN))
     {
@@ -194,7 +201,7 @@ expr *_parse_group(parser *p)
     return ex;
 }
 
-stmt_list _parse_block_stmt(parser *p)
+stmt_list _parse_block_stmt(parser* p)
 {
     stmt_list block = new_stmt_list();
     stmt cur_stmt;
@@ -218,9 +225,9 @@ stmt_list _parse_block_stmt(parser *p)
     return block;
 }
 
-expr *_parse_if(parser *p)
+expr* _parse_if(parser* p)
 {
-    expr *ex = malloc(sizeof(expr));
+    expr* ex = malloc(sizeof(expr));
     ex->type = IF_EXPR;
     struct if_expr if_data;
 
@@ -266,7 +273,7 @@ expr *_parse_if(parser *p)
     return ex;
 }
 
-token_list _parse_fn_params(parser *p)
+token_list _parse_fn_params(parser* p)
 {
     token_list params = new_token_list();
 
@@ -299,7 +306,7 @@ token_list _parse_fn_params(parser *p)
     }
 }
 
-expr_list _parse_call_args(parser *p)
+expr_list _parse_call_args(parser* p)
 {
     expr_list params = new_expr_list();
 
@@ -329,9 +336,9 @@ expr_list _parse_call_args(parser *p)
     }
 }
 
-expr *_parse_call(parser *p, expr *left)
+expr* _parse_call(parser* p, expr* left)
 {
-    expr *ex = malloc(sizeof(expr));
+    expr* ex = malloc(sizeof(expr));
     ex->type = CALL_EXPR;
     struct call_expr call;
 
@@ -343,9 +350,9 @@ expr *_parse_call(parser *p, expr *left)
     return ex;
 }
 
-expr *_parse_fn(parser *p)
+expr* _parse_fn(parser* p)
 {
-    expr *ex = malloc(sizeof(expr));
+    expr* ex = malloc(sizeof(expr));
     ex->type = LITERAL_EXPR;
     literal lit;
     lit.type = FN_LIT;
@@ -373,13 +380,13 @@ expr *_parse_fn(parser *p)
     return ex;
 }
 
-expr *_parse_expression(parser *p, precedence prec)
+expr* _parse_expression(parser* p, precedence prec)
 {
     // Inital prefix function
-    expr *left_expr;
+    expr* left_expr;
     switch (p->cur_token.type)
     {
-    // Literals
+        // Literals
     case IDENT:
     case INT:
     case TRUE:
@@ -420,7 +427,7 @@ expr *_parse_expression(parser *p, precedence prec)
     return left_expr;
 }
 
-stmt _parse_let_statement(parser *p)
+stmt _parse_let_statement(parser* p)
 {
     let_stmt let;
     stmt new_stmt;
@@ -453,7 +460,7 @@ stmt _parse_let_statement(parser *p)
     return new_stmt;
 }
 
-stmt _parse_return_statement(parser *p)
+stmt _parse_return_statement(parser* p)
 {
     return_stmt ret;
     stmt new_stmt;
@@ -473,7 +480,7 @@ stmt _parse_return_statement(parser *p)
     return new_stmt;
 }
 
-stmt _parse_expr_stmt(parser *p)
+stmt _parse_expr_stmt(parser* p)
 {
     expr_stmt ex;
     stmt new_stmt;
@@ -491,7 +498,7 @@ stmt _parse_expr_stmt(parser *p)
     return new_stmt;
 }
 
-stmt _parse_statement(parser *p)
+stmt _parse_statement(parser* p)
 {
     switch (p->cur_token.type)
     {
@@ -504,7 +511,7 @@ stmt _parse_statement(parser *p)
     }
 }
 
-void _next_parser_token(parser *p)
+void _next_parser_token(parser* p)
 {
     p->cur_token = p->peek_token;
     p->peek_token = next_lexer_token(p->l);

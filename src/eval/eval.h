@@ -15,12 +15,12 @@ typedef struct object
 {
     object_type type;
     literal lit;
-    char *err;
+    char* err;
 } object;
 
 typedef struct env_map
 {
-    char *key;
+    char* key;
     object value;
 } env_map;
 
@@ -28,11 +28,11 @@ typedef struct environment environment;
 
 typedef struct environment
 {
-    env_map *inner;
-    environment *outer;
+    env_map* inner;
+    environment* outer;
 } environment;
 
-object eval_program(stmt_list *p, environment *env);
-env_map *new_env_map();
+object eval_program(stmt_list* p, environment* env);
+env_map* new_env_map();
 
 #endif

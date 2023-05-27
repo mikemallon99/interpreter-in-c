@@ -7,18 +7,18 @@ bool assert_prog_output(char* input_str, literal exp_val) {
     parser p = new_parser(&l);
     stmt_list prog = parse_program(&p);
     env_map* env = new_env_map();
-    literal out = eval_program(&prog, env);
+    object out = eval_program(&prog, env);
     free(env);
 
-    printf("%s: %s\n", input_str, literal_string(out));
+    printf("%s: %s\n", input_str, literal_string(out.lit));
 
-    assert(out.type == exp_val.type);
-    switch (out.type) {
+    assert(out.lit.type == exp_val.type);
+    switch (out.lit.type) {
         case INT_LIT:
-            assert(out.data.i == exp_val.data.i);
+            assert(out.lit.data.i == exp_val.data.i);
             break;
         case BOOL_LIT:
-            assert(out.data.b == exp_val.data.b);
+            assert(out.lit.data.b == exp_val.data.b);
             break;
         case NULL_LIT:
             break;
@@ -113,6 +113,21 @@ bool test_eval_return() {
     assert_prog_output(input_str, exp_val);
 }
 
+bool test_eval_error() {
+    char input_str[] = "5 == false;";
+    lexer l = get_lexer(input_str);
+    parser p = new_parser(&l);
+    stmt_list prog = parse_program(&p);
+    env_map* env = new_env_map();
+    object out = eval_program(&prog, env);
+    free(env);
+
+    printf("%s: %s", input_str, out.err);
+
+    assert(out.type == ERR_OBJ);
+    assert(strcmp("Infix types do not match: Int != Bool", out.err) == 0);
+}
+
 int main() {
     test_eval_int();
     test_eval_let();
@@ -120,5 +135,6 @@ int main() {
     test_eval_infix();
     test_eval_ifelse();
     test_eval_return();
+    test_eval_error();
     return 0;
 }

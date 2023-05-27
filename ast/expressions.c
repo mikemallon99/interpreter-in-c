@@ -117,7 +117,6 @@ typedef union {
 typedef struct {
     literal_type type;
     literal_data data;
-    bool ret;
 } literal;
 
 typedef enum {
@@ -179,6 +178,30 @@ char* literal_string(literal lit) {
             break;
         default:
             strcpy(lit_str, "");
+    }
+
+    return lit_str;
+}
+
+
+char* lit_type_string(literal lit) {
+    char* lit_str = malloc(64);
+
+    switch (lit.type) {
+        case IDENT_LIT:
+            strcpy(lit_str, "Identifier");
+            break;
+        case INT_LIT:
+            strcpy(lit_str, "Int");
+            break;
+        case BOOL_LIT:
+            strcpy(lit_str, "Bool");
+            break;
+        case FN_LIT:
+            strcpy(lit_str, "Function");
+            break;
+        default:
+            strcpy(lit_str, "Null");
     }
 
     return lit_str;

@@ -12,7 +12,7 @@ void start() {
     lexer l;
     parser p;
     stmt_list prog;
-    literal out;
+    object out;
     env_map* env;
 
     while (true) {
@@ -29,7 +29,7 @@ void start() {
         env = new_env_map();
         out = eval_program(&prog, env);
         free(env);
-        printf("%s\n", literal_string(out));
+        printf("%s\n", literal_string(out.lit));
     }
 
 }

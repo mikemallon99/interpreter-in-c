@@ -4,17 +4,57 @@
 #include "../ast/expressions.c"
 #include "../parser/statements.c"
 #include <assert.h>
+#include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 
 #define ENV_MAP_SIZE 128
 
 
+typedef enum {
+    LIT_OBJ, RET_OBJ, ERR_OBJ
+} object_type;
+
+typedef struct object {
+    object_type type;
+    literal lit;
+    char* err;
+} object;
+
+object create_null_obj() {
+    object null;
+    null.type = LIT_OBJ;
+    null.lit.type = NULL_LIT;
+    return null;
+}
+
+object create_lit_obj(literal l) {
+    object obj;
+    obj.type = LIT_OBJ;
+    obj.lit = l;
+    return obj;
+}
+
+object create_err_obj(const char * format, ...)
+{
+    object obj;
+    obj.type = ERR_OBJ;
+
+    char* buffer = malloc(256);
+    va_list args;
+    va_start(args, format);
+    vsprintf(buffer, format, args);
+    obj.err = buffer;
+    va_end(args);
+    return obj;
+}
+
 typedef struct env_map {
     char* key;
-    literal value;
+    object value;
 } env_map;
 
-literal eval_program(stmt_list* p, env_map* env);
+object eval_program(stmt_list* p, env_map* env);
 
 env_map* new_env_map() {
     return (env_map*)malloc(sizeof(env_map) * ENV_MAP_SIZE);
@@ -29,44 +69,41 @@ int get_hash_env(char* str) {
     return hash % ENV_MAP_SIZE;
 }
 
-void insert_env(env_map* map, char* key, literal val) {
+void insert_env(env_map* map, char* key, object val) {
     env_map entry = {key, val};
     map[get_hash_env(key)] = entry;
 }
 
 
-literal get_env(env_map* map, char* key) {
+object get_env(env_map* map, char* key) {
     env_map entry = map[get_hash_env(key)];
     if (strcmp(entry.key, key) == 0) {
         return map[get_hash_env(key)].value;
     }
     else {
         printf("ERROR: tried to lookup identifier %s which does not exist.", key);
-        literal null;
-        null.type = NULL_LIT;
-        null.ret = false;
-        return null;
+        return create_null_obj();
     }
 }
 
 
-literal cast_as_bool(literal l) {
-    literal b;
-    b.type = BOOL_LIT;
-    b.ret = false;
+object cast_as_bool(object l) {
+    literal bool_lit;
+    bool_lit.type = BOOL_LIT;
+    object b = create_lit_obj(bool_lit);
 
-    switch (l.type) {
+    switch (l.lit.type) {
         case BOOL_LIT:
-            b.data.b = l.data.b;
+            b.lit.data.b = l.lit.data.b;
             break;
         case INT_LIT:
-            b.data.b = l.data.i;
+            b.lit.data.b = l.lit.data.i;
             break;
         case FN_LIT:
-            b.data.b = l.data.fn.body.count;
+            b.lit.data.b = l.lit.data.fn.body.count;
             break;
         case NULL_LIT:
-            b.data.b = false;
+            b.lit.data.b = false;
             break;
         default:
             assert(false);
@@ -75,21 +112,17 @@ literal cast_as_bool(literal l) {
 }
 
 
-literal eval_prefix(token op, literal right) {
-    literal null;
-    null.type = NULL_LIT;
-    null.ret = false;
-
+object eval_prefix(token op, object right) {
     switch (op.type) {
         case BANG:
             right = cast_as_bool(right);
-            right.data.b = !right.data.b;
+            right.lit.data.b = !right.lit.data.b;
             return right;
         case MINUS:
-            if (right.type != INT_LIT) {
-                return null;
+            if (right.lit.type != INT_LIT) {
+                return create_null_obj();
             }
-            right.data.i = -right.data.i;
+            right.lit.data.i = -right.lit.data.i;
             return right;
         default:
             assert(false);
@@ -97,19 +130,59 @@ literal eval_prefix(token op, literal right) {
 }
 
 
-literal lit_gt(literal left, literal right) {
-    literal out;
-    out.type = NULL_LIT;
-    out.ret = false;
+object lit_gt(object left, object right) {
+    literal bool_lit;
+    bool_lit.type = BOOL_LIT;
+    object out = create_lit_obj(bool_lit);
 
-    if (left.type != right.type) {
+    if (left.lit.type != right.lit.type) {
         return out;
     }
 
-    switch (left.type) {
+    switch (left.lit.type) {
         case INT_LIT:
-            out.type = BOOL_LIT;
-            out.data.b = left.data.i > right.data.i;
+            out.lit.type = BOOL_LIT;
+            out.lit.data.b = left.lit.data.i > right.lit.data.i;
+            return out;
+        default:
+            return create_null_obj();
+    }
+}
+
+
+object lit_lt(object left, object right) {
+    literal bool_lit;
+    bool_lit.type = BOOL_LIT;
+    object out = create_lit_obj(bool_lit);
+
+    if (left.lit.type != right.lit.type) {
+        return out;
+    }
+
+    switch (left.lit.type) {
+        case INT_LIT:
+            out.lit.type = BOOL_LIT;
+            out.lit.data.b = left.lit.data.i < right.lit.data.i;
+            return out;
+        default:
+            return create_null_obj();
+    }
+}
+
+
+object lit_eq(object left, object right) {
+    literal bool_lit;
+    bool_lit.type = BOOL_LIT;
+    object out = create_lit_obj(bool_lit);
+
+    if (left.lit.type != right.lit.type) {
+        return out;
+    }
+
+    switch (left.lit.type) {
+        case INT_LIT:
+            out.lit.type = BOOL_LIT;
+            out.lit.data.b = left.lit.data.i == right.lit.data.i;
             return out;
         default:
             return out;
@@ -117,98 +190,61 @@ literal lit_gt(literal left, literal right) {
 }
 
 
-literal lit_lt(literal left, literal right) {
-    literal out;
-    out.type = NULL_LIT;
-    out.ret = false;
+object lit_neq(object left, object right) {
+    literal bool_lit;
+    bool_lit.type = BOOL_LIT;
+    object out = create_lit_obj(bool_lit);
 
-    if (left.type != right.type) {
+    if (left.lit.type != right.lit.type) {
         return out;
     }
 
-    switch (left.type) {
+    switch (left.lit.type) {
         case INT_LIT:
-            out.type = BOOL_LIT;
-            out.data.b = left.data.i < right.data.i;
+            out.lit.type = BOOL_LIT;
+            out.lit.data.b = left.lit.data.i != right.lit.data.i;
             return out;
         default:
-            return out;
+            return create_null_obj();
     }
 }
 
 
-literal lit_eq(literal left, literal right) {
-    literal out;
-    out.type = NULL_LIT;
-    out.ret = false;
+object eval_infix(token op, object left, object right) {
+    object out;
 
-    if (left.type != right.type) {
-        return out;
+    if (left.lit.type != right.lit.type) {
+        return create_err_obj("Infix types do not match: %s != %s", lit_type_string(left.lit), lit_type_string(right.lit));
     }
-
-    switch (left.type) {
-        case INT_LIT:
-            out.type = BOOL_LIT;
-            out.data.b = left.data.i == right.data.i;
-            return out;
-        default:
-            return out;
-    }
-}
-
-
-literal lit_neq(literal left, literal right) {
-    literal out;
-    out.type = NULL_LIT;
-
-    if (left.type != right.type) {
-        return out;
-    }
-
-    switch (left.type) {
-        case INT_LIT:
-            out.type = BOOL_LIT;
-            out.data.b = left.data.i != right.data.i;
-            return out;
-        default:
-            return out;
-    }
-}
-
-
-literal eval_infix(token op, literal left, literal right) {
-    literal out;
-    out.type = NULL_LIT;
-    out.ret = false;
 
     switch (op.type) {
         case PLUS:
-            if (left.type != INT_LIT || right.type != INT_LIT) {
+            if (left.lit.type != INT_LIT || right.lit.type != INT_LIT) {
                 return out;
             }
-            out.type = INT_LIT;
-            out.data.i = left.data.i + right.data.i;
+            out.lit.type = INT_LIT;
+            out.lit.data.i = left.lit.data.i + right.lit.data.i;
             return out;
         case MINUS:
-            if (left.type != INT_LIT || right.type != INT_LIT) {
+            if (left.lit.type != INT_LIT || right.lit.type != INT_LIT) {
                 return out;
             }
-            out.type = INT_LIT;
-            out.data.i = left.data.i - right.data.i;
+            out.lit.type = INT_LIT;
+            out.lit.data.i = left.lit.data.i - right.lit.data.i;
             return out;
         case ASTERISK:
-            if (left.type != INT_LIT || right.type != INT_LIT) {
+            if (left.lit.type != INT_LIT || right.lit.type != INT_LIT) {
                 return out;
             }
-            out.type = INT_LIT;
-            out.data.i = left.data.i * right.data.i;
+            out.lit.type = INT_LIT;
+            out.lit.data.i = left.lit.data.i * right.lit.data.i;
             return out;
         case SLASH:
-            if (left.type != INT_LIT || right.type != INT_LIT) {
+            if (left.lit.type != INT_LIT || right.lit.type != INT_LIT) {
                 return out;
             }
-            out.type = INT_LIT;
-            out.data.i = left.data.i / right.data.i;
+            out.lit.type = INT_LIT;
+            out.lit.data.i = left.lit.data.i / right.lit.data.i;
             return out;
         case GT:
             return lit_gt(left, right);
@@ -224,68 +260,60 @@ literal eval_infix(token op, literal left, literal right) {
 }
 
 
-literal eval_expr(expr* e, env_map* env) {
-    literal null;
-    null.type = NULL_LIT;
-    null.ret = false;
-
+object eval_expr(expr* e, env_map* env) {
     switch (e->type) {
         case LITERAL_EXPR:
             // Resolve any identifier
             if (e->data.lit.type == IDENT_LIT) {
                 return get_env(env, e->data.lit.data.t.value);
             }
-            return e->data.lit;
+            return create_lit_obj(e->data.lit);
         case PREFIX_EXPR:
             return eval_prefix(e->data.pre.operator, eval_expr(e->data.pre.right, env));
         case INFIX_EXPR:
             return eval_infix(e->data.inf.operator, eval_expr(e->data.inf.left, env), eval_expr(e->data.inf.right, env));
         case IF_EXPR:
-            if (cast_as_bool(eval_expr(e->data.ifelse.condition, env)).data.b) {
+            if (cast_as_bool(eval_expr(e->data.ifelse.condition, env)).lit.data.b) {
                 return eval_program(&e->data.ifelse.consequence, env);
             } else if (e->data.ifelse.has_alt) {
                 return eval_program(&e->data.ifelse.alternative, env);
             } else {
-                return null;
+                return create_null_obj();
             }
         default:
-            return null;
+            return create_null_obj();
     }
 }
 
 
-literal eval_stmt(stmt* s, env_map* env) {
-    literal null;
-    null.type = NULL_LIT;
-    null.ret = false;
-    literal out;
+object eval_stmt(stmt* s, env_map* env) {
+    object out;
 
     switch (s->type) {
         // Can I just combine ret into expr
         case RETURN_STMT:
             out = eval_expr(s->data.ret.value, env);
-            out.ret = true;
             return out;
         case EXPR_STMT:
             return eval_expr(s->data.expr.value, env);
         case LET_STMT:
             insert_env(env, s->data.let.identifier.value, eval_expr(s->data.let.value, env));
-            return null;
+            return create_null_obj();
         default:
-            return null;
+            return create_null_obj();
     }
 }
 
 
-literal eval_program(stmt_list* p, env_map* env) {
-    literal out;
+object eval_program(stmt_list* p, env_map* env) {
+    object out;
 
     for (int i = 0; i < p->count; i++) {
         out = eval_stmt(&p->statements[i], env);
         if (p->statements[i].type == RETURN_STMT) {
-            out.ret = true;
+            out.type = RET_OBJ;
             break;
-        } else if (out.ret) {
+        } else if (out.type == RET_OBJ || out.type == ERR_OBJ) {
             break;
         }
     }

@@ -7,28 +7,28 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(Headers
-  tokens.h
-  repl/repl.h
-  parser/parser.h
-  parser/statements.h
-  lexer/lexer.h
-  eval/eval.h
-  ast/ast.h
-  ast/expressions.h
+  src/tokens.h
+  src/repl/repl.h
+  src/parser/parser.h
+  src/parser/statements.h
+  src/lexer/lexer.h
+  src/eval/eval.h
+  src/ast/ast.h
+  src/ast/expressions.h
 )
 
 set(Sources
-  tokens.c
-  repl/repl.c
-  parser/parser.c
-  parser/statements.c
-  lexer/lexer.c
-  eval/eval.c
-  ast/ast.c
-  ast/expressions.c
+  src/tokens.c
+  src/repl/repl.c
+  src/parser/parser.c
+  src/parser/statements.c
+  src/lexer/lexer.c
+  src/eval/eval.c
+  src/ast/ast.c
+  src/ast/expressions.c
 )
 
 add_library(${This}_lib STATIC ${Sources} ${Headers})
 target_include_directories(${This}_lib PUBLIC src)
 
-add_executable(${This} ${Sources} ${Headers} main.c)
+add_executable(${This} ${Sources} ${Headers} src/main.c)

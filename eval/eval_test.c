@@ -2,6 +2,17 @@
 #include <assert.h>
 #include "eval.c"
 
+object get_prog_output(char* input_str) {
+    lexer l = get_lexer(input_str);
+    parser p = new_parser(&l);
+    stmt_list prog = parse_program(&p);
+    env_map* env = new_env_map();
+    object out = eval_program(&prog, env);
+    free(env);
+
+    return out;
+}
+
 bool assert_prog_output(char* input_str, literal exp_val) {
     lexer l = get_lexer(input_str);
     parser p = new_parser(&l);
@@ -114,18 +125,29 @@ bool test_eval_return() {
 }
 
 bool test_eval_error() {
-    char input_str[] = "5 == false;";
-    lexer l = get_lexer(input_str);
-    parser p = new_parser(&l);
-    stmt_list prog = parse_program(&p);
-    env_map* env = new_env_map();
-    object out = eval_program(&prog, env);
-    free(env);
-
-    printf("%s: %s", input_str, out.err);
-
+    char input_str_1[] = "5 == false;";
+    object out = get_prog_output(input_str_1);
     assert(out.type == ERR_OBJ);
-    assert(strcmp("Infix types do not match: Int != Bool", out.err) == 0);
+    assert(strcmp("type mismatch: Int != Bool", out.err) == 0);
+    printf("%s: %s", input_str_1, out.err);
+
+    char input_str_2[] = "true + false;";
+    out = get_prog_output(input_str_2);
+    assert(out.type == ERR_OBJ);
+    assert(strcmp("operator not supported: +", out.err) == 0);
+    printf("%s: %s", input_str_2, out.err);
+
+    char input_str_3[] = "false / true";
+    out = get_prog_output(input_str_3);
+    assert(out.type == ERR_OBJ);
+    assert(strcmp("operator not supported: /", out.err) == 0);
+    printf("%s: %s", input_str_3, out.err);
+
+    char input_str_4[] = "-false";
+    out = get_prog_output(input_str_4);
+    assert(out.type == ERR_OBJ);
+    assert(strcmp("operator not supported: -", out.err) == 0);
+    printf("%s: %s", input_str_4, out.err);
 }
 
 int main() {

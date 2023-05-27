@@ -106,7 +106,7 @@ object cast_as_bool(object l) {
             b.lit.data.b = false;
             break;
         default:
-            assert(false);
+            return create_err_obj("cannot cast object as bool");
     }
     return b;
 }
@@ -119,11 +119,11 @@ object eval_prefix(token op, object right) {
             right.lit.data.b = !right.lit.data.b;
             return right;
         case MINUS:
-            if (right.lit.type != INT_LIT) {
-                return create_null_obj();
+            if (right.lit.type == INT_LIT) {
+                right.lit.data.i = -right.lit.data.i;
+                return right;
             }
-            right.lit.data.i = -right.lit.data.i;
-            return right;
+            return create_err_obj("operator not supported: -");
         default:
             assert(false);
     }
@@ -145,7 +145,7 @@ object lit_gt(object left, object right) {
             out.lit.data.b = left.lit.data.i > right.lit.data.i;
             return out;
         default:
-            return create_null_obj();
+            return create_err_obj("operator not supported: >");
     }
 }
 
@@ -165,7 +165,7 @@ object lit_lt(object left, object right) {
             out.lit.data.b = left.lit.data.i < right.lit.data.i;
             return out;
         default:
-            return create_null_obj();
+            return create_err_obj("operator not supported: <");
     }
 }
 
@@ -185,7 +185,7 @@ object lit_eq(object left, object right) {
             out.lit.data.b = left.lit.data.i == right.lit.data.i;
             return out;
         default:
-            return out;
+            return create_err_obj("operator not supported: ==");
     }
 }
 
@@ -205,7 +205,7 @@ object lit_neq(object left, object right) {
             out.lit.data.b = left.lit.data.i != right.lit.data.i;
             return out;
         default:
-            return create_null_obj();
+            return create_err_obj("operator not supported: !=");
     }
 }
 
@@ -214,38 +214,38 @@ object eval_infix(token op, object left, object right) {
     object out;
 
     if (left.lit.type != right.lit.type) {
-        return create_err_obj("Infix types do not match: %s != %s", lit_type_string(left.lit), lit_type_string(right.lit));
+        return create_err_obj("type mismatch: %s != %s", lit_type_string(left.lit), lit_type_string(right.lit));
     }
 
     switch (op.type) {
         case PLUS:
-            if (left.lit.type != INT_LIT || right.lit.type != INT_LIT) {
+            if (left.lit.type == INT_LIT) {
+                out.lit.type = INT_LIT;
+                out.lit.data.i = left.lit.data.i + right.lit.data.i;
                 return out;
             }
-            out.lit.type = INT_LIT;
-            out.lit.data.i = left.lit.data.i + right.lit.data.i;
-            return out;
+            return create_err_obj("operator not supported: %s", op.value);
         case MINUS:
-            if (left.lit.type != INT_LIT || right.lit.type != INT_LIT) {
+            if (left.lit.type == INT_LIT) {
+                out.lit.type = INT_LIT;
+                out.lit.data.i = left.lit.data.i - right.lit.data.i;
                 return out;
             }
-            out.lit.type = INT_LIT;
-            out.lit.data.i = left.lit.data.i - right.lit.data.i;
-            return out;
+            return create_err_obj("operator not supported: %s", op.value);
         case ASTERISK:
-            if (left.lit.type != INT_LIT || right.lit.type != INT_LIT) {
+            if (left.lit.type == INT_LIT) {
+                out.lit.type = INT_LIT;
+                out.lit.data.i = left.lit.data.i * right.lit.data.i;
                 return out;
             }
-            out.lit.type = INT_LIT;
-            out.lit.data.i = left.lit.data.i * right.lit.data.i;
-            return out;
+            return create_err_obj("operator not supported: %s", op.value);
         case SLASH:
-            if (left.lit.type != INT_LIT || right.lit.type != INT_LIT) {
+            if (left.lit.type == INT_LIT) {
+                out.lit.type = INT_LIT;
+                out.lit.data.i = left.lit.data.i / right.lit.data.i;
                 return out;
             }
-            out.lit.type = INT_LIT;
-            out.lit.data.i = left.lit.data.i / right.lit.data.i;
-            return out;
+            return create_err_obj("operator not supported: %s", op.value);
         case GT:
             return lit_gt(left, right);
         case LT:
@@ -255,7 +255,7 @@ object eval_infix(token op, object left, object right) {
         case NOT_EQ:
             return lit_neq(left, right);
         default:
-            return out;
+            return create_err_obj("operator not supported: %s", op.value);
     }
 }
 

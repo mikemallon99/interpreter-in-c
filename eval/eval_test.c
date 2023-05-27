@@ -148,6 +148,12 @@ bool test_eval_error() {
     assert(out.type == ERR_OBJ);
     assert(strcmp("operator not supported: -", out.err) == 0);
     printf("%s: %s", input_str_4, out.err);
+
+    char input_str_5[] = "if (false / true) { 10 }";
+    out = get_prog_output(input_str_5);
+    assert(out.type == ERR_OBJ);
+    assert(strcmp("operator not supported: /", out.err) == 0);
+    printf("%s: %s", input_str_5, out.err);
 }
 
 int main() {

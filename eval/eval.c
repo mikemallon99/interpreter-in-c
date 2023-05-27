@@ -49,6 +49,10 @@ object create_err_obj(const char * format, ...)
     return obj;
 }
 
+bool is_error(object obj) {
+    return obj.type == ERR_OBJ;
+}
+
 typedef struct env_map {
     char* key;
     object value;
@@ -81,8 +85,7 @@ object get_env(env_map* map, char* key) {
         return map[get_hash_env(key)].value;
     }
     else {
-        printf("ERROR: tried to lookup identifier %s which does not exist.", key);
-        return create_null_obj();
+        return create_err_obj("tried to lookup identifier %s which does not exist", key);
     }
 }
 
@@ -261,6 +264,9 @@ object eval_infix(token op, object left, object right) {
 
 
 object eval_expr(expr* e, env_map* env) {
+    object out;
+    object left, right;
+
     switch (e->type) {
         case LITERAL_EXPR:
             // Resolve any identifier
@@ -269,11 +275,31 @@ object eval_expr(expr* e, env_map* env) {
             }
             return create_lit_obj(e->data.lit);
         case PREFIX_EXPR:
-            return eval_prefix(e->data.pre.operator, eval_expr(e->data.pre.right, env));
+            out = eval_expr(e->data.pre.right, env);
+            if (is_error(out)) {
+                return out;
+            }
+            return eval_prefix(e->data.pre.operator, out);
         case INFIX_EXPR:
-            return eval_infix(e->data.inf.operator, eval_expr(e->data.inf.left, env), eval_expr(e->data.inf.right, env));
+            left = eval_expr(e->data.inf.left, env);
+            if (is_error(left)) {
+                return left;
+            }
+            right = eval_expr(e->data.inf.right, env);
+            if (is_error(right)) {
+                return right;
+            }
+            return eval_infix(e->data.inf.operator, left, right);
         case IF_EXPR:
-            if (cast_as_bool(eval_expr(e->data.ifelse.condition, env)).lit.data.b) {
+            out = eval_expr(e->data.ifelse.condition, env);
+            if (is_error(out)) {
+                return out;
+            }
+            out = cast_as_bool(out);
+            if (is_error(out)) {
+                return out;
+            }
+            if (out.lit.data.b) {
                 return eval_program(&e->data.ifelse.consequence, env);
             } else if (e->data.ifelse.has_alt) {
                 return eval_program(&e->data.ifelse.alternative, env);
@@ -293,11 +319,19 @@ object eval_stmt(stmt* s, env_map* env) {
         // Can I just combine ret into expr
         case RETURN_STMT:
             out = eval_expr(s->data.ret.value, env);
+            if (is_error(out)) {
+                return out;
+            }
+            out.type = RET_OBJ;
             return out;
         case EXPR_STMT:
             return eval_expr(s->data.expr.value, env);
         case LET_STMT:
-            insert_env(env, s->data.let.identifier.value, eval_expr(s->data.let.value, env));
+            out = eval_expr(s->data.let.value, env);
+            if (is_error(out)) {
+                return out;
+            }
+            insert_env(env, s->data.let.identifier.value, out);
             return create_null_obj();
         default:
             return create_null_obj();
@@ -310,10 +344,7 @@ object eval_program(stmt_list* p, env_map* env) {
 
     for (int i = 0; i < p->count; i++) {
         out = eval_stmt(&p->statements[i], env);
-        if (p->statements[i].type == RETURN_STMT) {
-            out.type = RET_OBJ;
-            break;
-        } else if (out.type == RET_OBJ || out.type == ERR_OBJ) {
+        if (out.type == RET_OBJ || out.type == ERR_OBJ) {
             break;
         }
     }

@@ -9,7 +9,8 @@
 
 #include "../src/lexer/lexer.h"
 
-void test_simple() {
+void test_simple()
+{
     char input[] = "=+(){},;";
 
     token tests[] = {
@@ -22,35 +23,40 @@ void test_simple() {
         {.type = COMMA, .value = ","},
         {.type = SEMICOLON, .value = ";"},
     };
-    
+
     lexer l = get_lexer(input);
 
     bool passed = true;
     token cur_token;
-    for (int i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
+    for (int i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    {
         cur_token = next_lexer_token(&l);
-        if (cur_token.type != tests[i].type) {
+        if (cur_token.type != tests[i].type)
+        {
             printf("Char #%d\n", i);
             printf("%d != %d\n", cur_token.type, tests[i].type);
             passed = false;
         }
-        if (strcmp(cur_token.value, tests[i].value) != 0) {
+        if (strcmp(cur_token.value, tests[i].value) != 0)
+        {
             printf("Char #%d\n", i);
             printf("%s != %s\n", cur_token.value, tests[i].value);
             passed = false;
-        } 
+        }
         // else {
         //     printf("%s == %s\n", cur_token.value, tests[i].value);
         // }
         free(cur_token.value);
     }
-    if (passed) {
+    if (passed)
+    {
         printf("Passed!\n");
     }
 }
 
-void test_code() {
-    char* input = 
+void test_code()
+{
+    char *input =
         "let five = 5;\n"
         "let ten = 10;\n"
         "let add = fn(x, y) {\n"
@@ -147,34 +153,40 @@ void test_code() {
         {.type = EOF_T, .value = "\0"},
 
     };
-    
+
     lexer l = get_lexer(input);
 
     token cur_token;
     bool passed = true;
-    for (int i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
+    for (int i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    {
         cur_token = next_lexer_token(&l);
-        if (cur_token.type != tests[i].type) {
+        if (cur_token.type != tests[i].type)
+        {
             printf("token #%d\n", i);
             printf("%d != %d\n", cur_token.type, tests[i].type);
             passed = false;
         }
-        if (strcmp(cur_token.value, tests[i].value) != 0) {
+        if (strcmp(cur_token.value, tests[i].value) != 0)
+        {
             printf("value #%d\n", i);
             printf("%s != %s\n", cur_token.value, tests[i].value);
             passed = false;
-        } 
-        else {
+        }
+        else
+        {
             printf("%s == %s\n", cur_token.value, tests[i].value);
         }
         free(cur_token.value);
     }
-    if (passed) {
+    if (passed)
+    {
         printf("Passed!\n");
     }
 }
 
-void run_all_lexer_tests() {
+void run_all_lexer_tests()
+{
     printf("Test Simple:\n");
     test_simple();
 

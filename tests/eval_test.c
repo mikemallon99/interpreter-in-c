@@ -8,59 +8,65 @@
 #include "../src/parser/parser.h"
 #include "../src/eval/eval.h"
 
-object get_prog_output(char* input_str) {
+object get_prog_output(char *input_str)
+{
     lexer l = get_lexer(input_str);
     parser p = new_parser(&l);
     stmt_list prog = parse_program(&p);
     environment env;
-    env_map* inner = new_env_map();
+    env_map *inner = new_env_map();
     env.inner = inner;
     object out = eval_program(&prog, &env);
 
     return out;
 }
 
-bool assert_prog_output(char* input_str, literal exp_val) {
+bool assert_prog_output(char *input_str, literal exp_val)
+{
     lexer l = get_lexer(input_str);
     parser p = new_parser(&l);
     stmt_list prog = parse_program(&p);
     environment env;
-    env_map* inner = new_env_map();
+    env_map *inner = new_env_map();
     env.inner = inner;
     object out = eval_program(&prog, &env);
 
     printf("%s: %s\n", input_str, literal_string(out.lit));
 
     assert(out.lit.type == exp_val.type);
-    switch (out.lit.type) {
-        case INT_LIT:
-            assert(out.lit.data.i == exp_val.data.i);
-            break;
-        case BOOL_LIT:
-            assert(out.lit.data.b == exp_val.data.b);
-            break;
-        case NULL_LIT:
-            break;
-        default:
-            assert(false);
+    switch (out.lit.type)
+    {
+    case INT_LIT:
+        assert(out.lit.data.i == exp_val.data.i);
+        break;
+    case BOOL_LIT:
+        assert(out.lit.data.b == exp_val.data.b);
+        break;
+    case NULL_LIT:
+        break;
+    default:
+        assert(false);
     }
 }
 
-bool test_eval_int() {
+bool test_eval_int()
+{
     literal exp_val;
     exp_val.type = INT_LIT;
     exp_val.data.i = 5;
     assert_prog_output("5;", exp_val);
 }
 
-bool test_eval_let() {
+bool test_eval_let()
+{
     literal exp_val;
     exp_val.type = INT_LIT;
     exp_val.data.i = 5;
     assert_prog_output("let five = 5; five;", exp_val);
 }
 
-bool test_eval_prefix() {
+bool test_eval_prefix()
+{
     literal exp_val;
 
     // EVAL BANGS
@@ -82,7 +88,8 @@ bool test_eval_prefix() {
     assert_prog_output("-5;", exp_val);
 }
 
-bool test_eval_infix() {
+bool test_eval_infix()
+{
     literal exp_val;
 
     exp_val.type = INT_LIT;
@@ -102,7 +109,8 @@ bool test_eval_infix() {
     assert_prog_output("-10 + 25 - 20;", exp_val);
 }
 
-bool test_eval_ifelse() {
+bool test_eval_ifelse()
+{
     literal exp_val;
 
     exp_val.type = INT_LIT;
@@ -117,22 +125,24 @@ bool test_eval_ifelse() {
     assert_prog_output("if (5 != 5) { 10 };", exp_val);
 }
 
-bool test_eval_return() {
+bool test_eval_return()
+{
     literal exp_val;
 
     exp_val.type = INT_LIT;
     exp_val.data.i = 10;
-    char input_str[] = 
-    "if (10 > 1) {"
-    "    if (10 > 1) {"
-    "        return 10;"
-    "    }"
-    "    return 1;"
-    "}";
+    char input_str[] =
+        "if (10 > 1) {"
+        "    if (10 > 1) {"
+        "        return 10;"
+        "    }"
+        "    return 1;"
+        "}";
     assert_prog_output(input_str, exp_val);
 }
 
-bool test_eval_error() {
+bool test_eval_error()
+{
     char input_str_1[] = "5 == false;";
     object out = get_prog_output(input_str_1);
     assert(out.type == ERR_OBJ);
@@ -164,11 +174,12 @@ bool test_eval_error() {
     printf("%s: %s", input_str_5, out.err);
 }
 
-bool test_eval_fn() {
-    char input_str[] = 
-    "let closure_fn = fn(x){ fn(y) {x + y}};"
-    "let add_2 = closure_fn(2);"
-    "add_2(4);";
+bool test_eval_fn()
+{
+    char input_str[] =
+        "let closure_fn = fn(x){ fn(y) {x + y}};"
+        "let add_2 = closure_fn(2);"
+        "add_2(4);";
 
     literal exp_val;
 
@@ -177,7 +188,8 @@ bool test_eval_fn() {
     assert_prog_output(input_str, exp_val);
 }
 
-void run_all_eval_tests() {
+void run_all_eval_tests()
+{
     test_eval_int();
     test_eval_let();
     test_eval_prefix();
@@ -188,4 +200,4 @@ void run_all_eval_tests() {
     test_eval_fn();
 }
 
-#endif 
+#endif

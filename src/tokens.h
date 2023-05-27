@@ -1,7 +1,8 @@
 #ifndef _TOKENSH_
 #define _TOKENSH_
 
-typedef enum {
+typedef enum
+{
     ILLEGAL,
     EOF_T,
 
@@ -14,9 +15,9 @@ typedef enum {
     PLUS,
     MINUS,
     BANG,
-    ASTERISK, 
+    ASTERISK,
     SLASH,
-    
+
     LT,
     GT,
     EQ,
@@ -41,12 +42,13 @@ typedef enum {
     RETURN
 } token_type;
 
-typedef struct {
+typedef struct
+{
     token_type type;
-    char* value;
+    char *value;
 } token;
 
-token_type lookup_ident(char* ident);
-char* get_token_type_string(token_type t);
+token_type lookup_ident(char *ident);
+char *get_token_type_string(token_type t);
 
 #endif

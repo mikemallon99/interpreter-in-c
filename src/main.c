@@ -1,6 +1,7 @@
 #include "repl/repl.h"
 
-int main() {
+int main()
+{
     start();
     return 0;
 }

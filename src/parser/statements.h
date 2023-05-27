@@ -7,43 +7,53 @@
 
 typedef struct expr expr;
 
-typedef enum {
-    LET_STMT, RETURN_STMT, EXPR_STMT, NULL_STMT
+typedef enum
+{
+    LET_STMT,
+    RETURN_STMT,
+    EXPR_STMT,
+    NULL_STMT
 } stmt_type;
 
-typedef struct {
+typedef struct
+{
     token identifier;
-    expr* value;
+    expr *value;
 } let_stmt;
 
-typedef struct {
-    expr* value;
+typedef struct
+{
+    expr *value;
 } return_stmt;
 
-typedef struct {
-    expr* value;
+typedef struct
+{
+    expr *value;
 } expr_stmt;
 
-typedef union {
+typedef union
+{
     let_stmt let;
     return_stmt ret;
     expr_stmt expr;
 } stmt_data;
 
-typedef struct {
+typedef struct
+{
     stmt_type type;
     stmt_data data;
 } stmt;
 
-typedef struct stmt_list {
-    stmt* statements;
+typedef struct stmt_list
+{
+    stmt *statements;
     size_t count;
     size_t capacity;
 } stmt_list;
 
-char* statement_string(stmt* s);
+char *statement_string(stmt *s);
 stmt_list new_stmt_list();
-void append_stmt_list(stmt_list* cur_list, stmt new_stmt);
-char* program_string(stmt_list* p);
+void append_stmt_list(stmt_list *cur_list, stmt new_stmt);
+char *program_string(stmt_list *p);
 
 #endif

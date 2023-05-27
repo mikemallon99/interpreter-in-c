@@ -86,6 +86,7 @@ expr* parse_literal(parser* p) {
     expr* ex = malloc(sizeof(expr));
     ex->type = LITERAL_EXPR;
     literal lit;
+    lit.ret = false;
 
     switch (p->cur_token.type) {
         case IDENT:
@@ -290,6 +291,7 @@ expr* parse_fn(parser* p) {
     ex->type = LITERAL_EXPR;
     literal lit;
     lit.type = FN_LIT;
+    lit.ret = false;
     struct fn_lit fn_data;
 
     if (!expect_peek(p, LPAREN)) {

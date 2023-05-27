@@ -6,7 +6,9 @@ bool assert_prog_output(char* input_str, literal exp_val) {
     lexer l = get_lexer(input_str);
     parser p = new_parser(&l);
     stmt_list prog = parse_program(&p);
-    literal out = eval_program(&prog);
+    env_map* env = new_env_map();
+    literal out = eval_program(&prog, env);
+    free(env);
 
     printf("%s: %s\n", input_str, literal_string(out));
 
@@ -96,11 +98,27 @@ bool test_eval_ifelse() {
     assert_prog_output("if (5 != 5) { 10 };", exp_val);
 }
 
+bool test_eval_return() {
+    literal exp_val;
+
+    exp_val.type = INT_LIT;
+    exp_val.data.i = 10;
+    char input_str[] = 
+    "if (10 > 1) {"
+    "    if (10 > 1) {"
+    "        return 10;"
+    "    }"
+    "    return 1;"
+    "}";
+    assert_prog_output(input_str, exp_val);
+}
+
 int main() {
     test_eval_int();
     test_eval_let();
     test_eval_prefix();
     test_eval_infix();
     test_eval_ifelse();
+    test_eval_return();
     return 0;
 }

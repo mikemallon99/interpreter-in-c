@@ -8,12 +8,13 @@
 
 #define ENV_MAP_SIZE 128
 
-literal eval_program(stmt_list* p);
 
 typedef struct env_map {
     char* key;
     literal value;
 } env_map;
+
+literal eval_program(stmt_list* p, env_map* env);
 
 env_map* new_env_map() {
     return (env_map*)malloc(sizeof(env_map) * ENV_MAP_SIZE);
@@ -43,6 +44,7 @@ literal get_env(env_map* map, char* key) {
         printf("ERROR: tried to lookup identifier %s which does not exist.", key);
         literal null;
         null.type = NULL_LIT;
+        null.ret = false;
         return null;
     }
 }
@@ -51,6 +53,8 @@ literal get_env(env_map* map, char* key) {
 literal cast_as_bool(literal l) {
     literal b;
     b.type = BOOL_LIT;
+    b.ret = false;
+
     switch (l.type) {
         case BOOL_LIT:
             b.data.b = l.data.b;
@@ -74,6 +78,8 @@ literal cast_as_bool(literal l) {
 literal eval_prefix(token op, literal right) {
     literal null;
     null.type = NULL_LIT;
+    null.ret = false;
+
     switch (op.type) {
         case BANG:
             right = cast_as_bool(right);
@@ -94,6 +100,7 @@ literal eval_prefix(token op, literal right) {
 literal lit_gt(literal left, literal right) {
     literal out;
     out.type = NULL_LIT;
+    out.ret = false;
 
     if (left.type != right.type) {
         return out;
@@ -113,6 +120,7 @@ literal lit_gt(literal left, literal right) {
 literal lit_lt(literal left, literal right) {
     literal out;
     out.type = NULL_LIT;
+    out.ret = false;
 
     if (left.type != right.type) {
         return out;
@@ -132,6 +140,7 @@ literal lit_lt(literal left, literal right) {
 literal lit_eq(literal left, literal right) {
     literal out;
     out.type = NULL_LIT;
+    out.ret = false;
 
     if (left.type != right.type) {
         return out;
@@ -170,7 +179,7 @@ literal lit_neq(literal left, literal right) {
 literal eval_infix(token op, literal left, literal right) {
     literal out;
     out.type = NULL_LIT;
-
+    out.ret = false;
 
     switch (op.type) {
         case PLUS:
@@ -218,6 +227,7 @@ literal eval_infix(token op, literal left, literal right) {
 literal eval_expr(expr* e, env_map* env) {
     literal null;
     null.type = NULL_LIT;
+    null.ret = false;
 
     switch (e->type) {
         case LITERAL_EXPR:
@@ -232,9 +242,9 @@ literal eval_expr(expr* e, env_map* env) {
             return eval_infix(e->data.inf.operator, eval_expr(e->data.inf.left, env), eval_expr(e->data.inf.right, env));
         case IF_EXPR:
             if (cast_as_bool(eval_expr(e->data.ifelse.condition, env)).data.b) {
-                return eval_program(&e->data.ifelse.consequence);
+                return eval_program(&e->data.ifelse.consequence, env);
             } else if (e->data.ifelse.has_alt) {
-                return eval_program(&e->data.ifelse.alternative);
+                return eval_program(&e->data.ifelse.alternative, env);
             } else {
                 return null;
             }
@@ -247,11 +257,15 @@ literal eval_expr(expr* e, env_map* env) {
 literal eval_stmt(stmt* s, env_map* env) {
     literal null;
     null.type = NULL_LIT;
+    null.ret = false;
+    literal out;
 
     switch (s->type) {
         // Can I just combine ret into expr
         case RETURN_STMT:
-            return eval_expr(s->data.ret.value, env);
+            out = eval_expr(s->data.ret.value, env);
+            out.ret = true;
+            return out;
         case EXPR_STMT:
             return eval_expr(s->data.expr.value, env);
         case LET_STMT:
@@ -263,18 +277,19 @@ literal eval_stmt(stmt* s, env_map* env) {
 }
 
 
-literal eval_program(stmt_list* p) {
-    env_map* env = new_env_map();
+literal eval_program(stmt_list* p, env_map* env) {
     literal out;
 
     for (int i = 0; i < p->count; i++) {
         out = eval_stmt(&p->statements[i], env);
         if (p->statements[i].type == RETURN_STMT) {
+            out.ret = true;
+            break;
+        } else if (out.ret) {
             break;
         }
     }
 
-    free(env);
     return out;
 }
 

@@ -13,6 +13,7 @@ void start() {
     parser p;
     stmt_list prog;
     literal out;
+    env_map* env;
 
     while (true) {
         printf(">> ");
@@ -25,7 +26,9 @@ void start() {
         l = get_lexer(input);
         p = new_parser(&l);
         prog = parse_program(&p);
-        out = eval_program(&prog);
+        env = new_env_map();
+        out = eval_program(&prog, env);
+        free(env);
         printf("%s\n", literal_string(out));
     }
 

@@ -117,6 +117,7 @@ typedef union {
 typedef struct {
     literal_type type;
     literal_data data;
+    bool ret;
 } literal;
 
 typedef enum {

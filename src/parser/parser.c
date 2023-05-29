@@ -371,9 +371,7 @@ expr* _parse_fn(parser* p)
     _next_parser_token(p);
 
     fn_data.body = _parse_block_stmt(p);
-    // Create an environment for functions to support closures
-    // closure_fn = fn(x) { fn(y) { x + y }}
-    fn_data.env = calloc(1, sizeof(environment));
+    fn_data.env = NULL;
 
     lit.data.fn = fn_data;
     ex->data.lit = lit;

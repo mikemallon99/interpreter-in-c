@@ -14,8 +14,9 @@ object get_prog_output(char* input_str)
     parser p = new_parser(&l);
     stmt_list prog = parse_program(&p);
     environment env;
-    env_map* inner = new_env_map();
+    env_map inner = new_env_map();
     env.inner = inner;
+    env.outer = NULL;
     object out = eval_program(&prog, &env);
 
     return out;
@@ -27,8 +28,9 @@ bool assert_prog_output(char* input_str, literal exp_val)
     parser p = new_parser(&l);
     stmt_list prog = parse_program(&p);
     environment env;
-    env_map* inner = new_env_map();
+    env_map inner = new_env_map();
     env.inner = inner;
+    env.outer = NULL;
     object out = eval_program(&prog, &env);
 
     printf("%s: %s\n", input_str, literal_string(out.lit));
@@ -176,16 +178,49 @@ bool test_eval_error()
 
 bool test_eval_fn()
 {
-    char input_str[] =
+    char input_str_1[] =
+        "let basic_fn = fn(x){ x + 2 };"
+        "basic_fn(2);";
+
+    literal exp_val_1;
+    exp_val_1.type = INT_LIT;
+    exp_val_1.data.i = 4;
+    assert_prog_output(input_str_1, exp_val_1);
+
+    char input_str_2[] =
         "let closure_fn = fn(x){ fn(y) {x + y}};"
         "let add_2 = closure_fn(2);"
         "add_2(4);";
 
+    literal exp_val_2;
+    exp_val_2.type = INT_LIT;
+    exp_val_2.data.i = 6;
+    assert_prog_output(input_str_2, exp_val_2);
+}
+
+bool test_eval_fn_2()
+{
+    char input_str[] =
+        "let closure_fn = fn(x){ fn(y) {x + y}};"
+        "let add_2 = closure_fn(2);"
+        "let add_3 = closure_fn(3);"
+        "add_2(4) + add_3(3);";
     literal exp_val;
 
     exp_val.type = INT_LIT;
-    exp_val.data.i = 6;
+    exp_val.data.i = 6 + 6;
     assert_prog_output(input_str, exp_val);
+
+    char input_str_2[] =
+        "let closure_fn = fn(x){ fn(y) {x + y}};"
+        "let add_2 = closure_fn(2);"
+        "let add_3 = closure_fn(3);"
+        "add_2(4) + add_3(3);";
+    literal exp_val_2;
+
+    exp_val_2.type = INT_LIT;
+    exp_val_2.data.i = 6 + 6;
+    assert_prog_output(input_str_2, exp_val_2);
 }
 
 void run_all_eval_tests()
@@ -198,6 +233,7 @@ void run_all_eval_tests()
     test_eval_return();
     test_eval_error();
     test_eval_fn();
+    test_eval_fn_2();
 }
 
 #endif

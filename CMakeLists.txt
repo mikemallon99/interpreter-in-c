@@ -3,7 +3,7 @@ project(IntepreterInC)
 
 set(This IntepreterInC)
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 99)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(Headers

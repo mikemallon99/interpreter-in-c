@@ -79,7 +79,7 @@ struct if_expr
 
 typedef struct expr_list
 {
-    expr* *exprs;
+    expr** exprs;
     size_t count;
     size_t capacity;
 } expr_list;

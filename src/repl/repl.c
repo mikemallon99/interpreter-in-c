@@ -14,8 +14,9 @@ void start()
     stmt_list prog;
     object out;
     environment env;
-    env_map* inner = new_env_map();
+    env_map inner = new_env_map();
     env.inner = inner;
+    env.outer = NULL;
 
     while (true)
     {
@@ -40,6 +41,4 @@ void start()
             printf("%s\n", literal_string(out.lit));
         }
     }
-
-    free(env.inner);
 }

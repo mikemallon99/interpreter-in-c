@@ -18,21 +18,27 @@ typedef struct object
     char* err;
 } object;
 
-typedef struct env_map
+typedef struct env_map_entry
 {
     char* key;
     object value;
+} env_map_entry;
+
+typedef struct env_map
+{
+    env_map_entry* entries;
+    int ref_count;
 } env_map;
 
 typedef struct environment environment;
 
 typedef struct environment
 {
-    env_map* inner;
+    env_map inner;
     environment* outer;
 } environment;
 
 object eval_program(stmt_list* p, environment* env);
-env_map* new_env_map();
+env_map new_env_map();
 
 #endif

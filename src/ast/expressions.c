@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <crtdbg.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
@@ -73,19 +74,21 @@ char* expr_list_string(expr_list* el)
 {
     char* el_str = malloc(128);
     char* tmp_str = malloc(128);
+    char* expr_str;
     strcpy(el_str, "");
 
     for (int i = 0; i < el->count; i++)
     {
+        expr_str = expression_string(el->exprs[i]);
         if (i == el->count - 1)
         {
             strcpy(tmp_str, el_str);
-            sprintf(el_str, "%s%s", tmp_str, expression_string(el->exprs[i]));
+            sprintf(el_str, "%s%s", tmp_str, expr_str);
         }
         else
         {
             strcpy(tmp_str, el_str);
-            sprintf(el_str, "%s%s, ", tmp_str, expression_string(el->exprs[i]));
+            sprintf(el_str, "%s%s, ", tmp_str, expr_str);
         }
     }
 
@@ -96,6 +99,8 @@ char* expr_list_string(expr_list* el)
 char* literal_string(literal lit)
 {
     char* lit_str = malloc(128);
+    char* str1;
+    char* str2;
 
     switch (lit.type)
     {
@@ -109,7 +114,11 @@ char* literal_string(literal lit)
         sprintf(lit_str, "%s", lit.data.b ? "true" : "false");
         break;
     case FN_LIT:
-        sprintf(lit_str, "fn(%s) { %s }", token_list_string(&lit.data.fn.params), program_string(&lit.data.fn.body));
+        str1 = token_list_string(&lit.data.fn.params);
+        str2 = program_string(&lit.data.fn.body);
+        sprintf(lit_str, "fn(%s) { %s }", str1, str2);
+        free(str1);
+        free(str2);
         break;
     default:
         strcpy(lit_str, "");
@@ -164,14 +173,27 @@ char* infix_string(struct infix_expr inf)
 char* if_string(struct if_expr ifelse)
 {
     char* if_str = malloc(128);
+    char* str1;
+    char* str2;
+    char* str3;
 
     if (ifelse.has_alt)
     {
-        sprintf(if_str, "if (%s) { %s } else { %s }", expression_string(ifelse.condition), program_string(&ifelse.consequence), program_string(&ifelse.alternative));
+        str1 = expression_string(ifelse.condition);
+        str2 = program_string(&ifelse.consequence);
+        str3 = program_string(&ifelse.alternative);
+        sprintf(if_str, "if (%s) { %s } else { %s }", str1, str2, str3);
+        free(str1);
+        free(str2);
+        free(str3);
     }
     else
     {
-        sprintf(if_str, "if (%s) { %s }", expression_string(ifelse.condition), program_string(&ifelse.consequence));
+        str1 = expression_string(ifelse.condition);
+        str2 = program_string(&ifelse.consequence);
+        sprintf(if_str, "if (%s) { %s }", str1, str2);
+        free(str1);
+        free(str2);
     }
 
     return if_str;
@@ -180,8 +202,12 @@ char* if_string(struct if_expr ifelse)
 char* call_string(struct call_expr call)
 {
     char* call_str = malloc(128);
+    char* str1 = expression_string(call.func);
+    char* str2 = expr_list_string(&call.args);
 
-    sprintf(call_str, "%s(%s)", expression_string(call.func), expr_list_string(&call.args));
+    sprintf(call_str, "%s(%s)", str1, str2);
+    free(str1);
+    free(str2);
 
     return call_str;
 }

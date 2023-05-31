@@ -135,17 +135,21 @@ expr* _parse_literal(parser* p)
     case INT:
         lit.type = INT_LIT;
         lit.data.i = atoi(p->cur_token.value);
+        free(p->cur_token.value);
         break;
     case TRUE:
         lit.type = BOOL_LIT;
         lit.data.b = true;
+        free(p->cur_token.value);
         break;
     case FALSE:
         lit.type = BOOL_LIT;
         lit.data.b = false;
+        free(p->cur_token.value);
         break;
     default:
         lit.type = NULL_LIT;
+        free(p->cur_token.value);
         break;
     }
 
@@ -235,6 +239,8 @@ expr* _parse_if(parser* p)
     {
         return NULL;
     }
+    free(p->cur_token.value);
+
     _next_parser_token(p);
 
     if_data.condition = _parse_expression(p, LOWEST_PR);
@@ -243,10 +249,14 @@ expr* _parse_if(parser* p)
     {
         return NULL;
     }
+    free(p->cur_token.value);
+
     if (!_expect_peek(p, LBRACE))
     {
         return NULL;
     }
+    free(p->cur_token.value);
+
     _next_parser_token(p);
 
     if_data.consequence = _parse_block_stmt(p);
@@ -255,10 +265,14 @@ expr* _parse_if(parser* p)
     if (_peek_token_is(p, ELSE))
     {
         _next_parser_token(p);
+        free(p->cur_token.value);
+
         if (!_expect_peek(p, LBRACE))
         {
             return NULL;
         }
+        free(p->cur_token.value);
+
         _next_parser_token(p);
 
         if_data.alternative = _parse_block_stmt(p);
@@ -280,6 +294,7 @@ token_list _parse_fn_params(parser* p)
     if (_peek_token_is(p, RPAREN))
     {
         _next_parser_token(p);
+        free(p->cur_token.value);
         return params;
     }
 
@@ -294,15 +309,15 @@ token_list _parse_fn_params(parser* p)
         if (_peek_token_is(p, COMMA))
         {
             _next_parser_token(p);
+            free(p->cur_token.value);
         }
         else if (!_expect_peek(p, RPAREN))
         {
             return params;
         }
-        else
-        {
-            return params;
-        }
+        free(p->cur_token.value);
+
+        return params;
     }
 }
 
@@ -313,6 +328,7 @@ expr_list _parse_call_args(parser* p)
     if (_peek_token_is(p, RPAREN))
     {
         _next_parser_token(p);
+        free(p->cur_token.value);
         return params;
     }
 
@@ -324,15 +340,15 @@ expr_list _parse_call_args(parser* p)
         if (_peek_token_is(p, COMMA))
         {
             _next_parser_token(p);
+            free(p->cur_token.value);
         }
         else if (!_expect_peek(p, RPAREN))
         {
             return params;
         }
-        else
-        {
-            return params;
-        }
+        free(p->cur_token.value);
+
+        return params;
     }
 }
 
@@ -362,12 +378,15 @@ expr* _parse_fn(parser* p)
     {
         return NULL;
     }
+    free(p->cur_token.value);
 
     fn_data.params = _parse_fn_params(p);
     if (!_expect_peek(p, LBRACE))
     {
         return NULL;
     }
+    free(p->cur_token.value);
+
     _next_parser_token(p);
 
     fn_data.body = _parse_block_stmt(p);
@@ -396,12 +415,15 @@ expr* _parse_expression(parser* p, precedence prec)
         left_expr = _parse_prefix(p);
         break;
     case LPAREN:
+        free(p->cur_token.value);
         left_expr = _parse_group(p);
         break;
     case IF:
+        free(p->cur_token.value);
         left_expr = _parse_if(p);
         break;
     case FUNCTION:
+        free(p->cur_token.value);
         left_expr = _parse_fn(p);
         break;
     default:
@@ -414,6 +436,7 @@ expr* _parse_expression(parser* p, precedence prec)
         switch (p->cur_token.type)
         {
         case LPAREN:
+            free(p->cur_token.value);
             left_expr = _parse_call(p, left_expr);
             break;
         default:
@@ -443,6 +466,7 @@ stmt _parse_let_statement(parser* p)
     {
         return new_stmt;
     }
+    free(p->cur_token.value);
 
     _next_parser_token(p);
 
@@ -451,6 +475,7 @@ stmt _parse_let_statement(parser* p)
     if (_peek_token_is(p, SEMICOLON))
     {
         _next_parser_token(p);
+        free(p->cur_token.value);
     }
 
     new_stmt.type = LET_STMT;
@@ -471,6 +496,7 @@ stmt _parse_return_statement(parser* p)
     if (_peek_token_is(p, SEMICOLON))
     {
         _next_parser_token(p);
+        free(p->cur_token.value);
     }
 
     new_stmt.type = RETURN_STMT;
@@ -501,8 +527,10 @@ stmt _parse_statement(parser* p)
     switch (p->cur_token.type)
     {
     case LET:
+        free(p->cur_token.value);
         return _parse_let_statement(p);
     case RETURN:
+        free(p->cur_token.value);
         return _parse_return_statement(p);
     default:
         return _parse_expr_stmt(p);

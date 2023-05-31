@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <crtdbg.h>
 
 #include "ast.h"
 

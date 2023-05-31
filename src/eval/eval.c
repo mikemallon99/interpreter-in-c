@@ -37,9 +37,7 @@ void _cleanup_expr_list(expr_list ex_lst);
 void _cleanup_stmt(stmt st);
 void _cleanup_stmt_list(stmt_list st_lst);
 void _cleanup_literal(literal lit);
-void _cleanup_object(object obj);
 void _cleanup_env_map(env_map env);
-void _cleanup_environment(environment* env);
 
 token _copy_token(token tok);
 token_list _copy_token_list(token_list tok_lst);
@@ -76,7 +74,7 @@ object eval_program(stmt_list* p, environment* env)
             break;
         }
         if (i != p->count - 1) {
-            _cleanup_object(out);
+            cleanup_object(out);
         }
     }
 
@@ -86,14 +84,6 @@ object eval_program(stmt_list* p, environment* env)
 
 
 // PRIVATE FUNCTIONS
-
-object _object_copy(object obj) {
-    object new_obj;
-    strcpy(new_obj.err, obj.err);
-    new_obj.type = obj.type;
-    new_obj.lit.type = obj.lit.type;
-    new_obj.lit.data = obj.lit.data;
-}
 
 void _cleanup_token(token tok) {
     free(tok.value);
@@ -134,7 +124,7 @@ void _cleanup_expr(expr* ex) {
             _cleanup_token(ex->data.pre.op);
             break;
         case LITERAL_EXPR:
-            _cleanup_literal(ex->data.lit);
+            // _cleanup_literal(ex->data.lit);
             break;
         case IF_EXPR:
             _cleanup_expr(ex->data.ifelse.condition);
@@ -259,7 +249,7 @@ void _cleanup_literal(literal lit) {
         case FN_LIT:
             _cleanup_token_list(lit.data.fn.params);
             _cleanup_stmt_list(lit.data.fn.body);
-            _cleanup_environment(lit.data.fn.env);
+            cleanup_environment(lit.data.fn.env);
             break;
         case IDENT_LIT:
             _cleanup_token(lit.data.t);
@@ -287,11 +277,12 @@ literal _copy_literal(literal lit) {
             new_lit.data.b = lit.data.b;
             break;
         default:
+            break;
     }
     return new_lit;
 }
 
-void _cleanup_object(object obj) {
+void cleanup_object(object obj) {
     if (obj.type == ERR_OBJ) {
         free(obj.err);
     }
@@ -319,7 +310,7 @@ void _cleanup_env_map(env_map env) {
             continue;
         }
         free(env.entries[i].key);
-        _cleanup_object(env.entries[i].value);
+        cleanup_object(env.entries[i].value);
     }
 }
 
@@ -345,9 +336,9 @@ environment* _copy_environment(environment* env) {
     return new_env;
 }
 
-void _cleanup_environment(environment* env) {
+void cleanup_environment(environment* env) {
     if (env->outer != NULL) {
-        _cleanup_environment(env->outer);
+        cleanup_environment(env->outer);
     }
     env->inner.ref_count -= 1;
     if (env->inner.ref_count > 0) {
@@ -358,8 +349,9 @@ void _cleanup_environment(environment* env) {
             continue;
         }
         free(env->inner.entries[i].key);
-        _cleanup_object(env->inner.entries[i].value);
+        cleanup_object(env->inner.entries[i].value);
     }
+    free(env->inner.entries);
 }
 
 void _increment_env_refs(environment* env) {
@@ -731,7 +723,7 @@ object _eval_expr(expr* e, environment* env)
             _insert_env(func.lit.data.fn.env->inner, func.lit.data.fn.params.tokens[i].value, out);
         }
         out = eval_program(&func.lit.data.fn.body, func.lit.data.fn.env);
-        _cleanup_environment(env);
+        cleanup_environment(env);
         return out;
     default:
         return _create_null_obj();
@@ -747,6 +739,7 @@ object _eval_stmt(stmt* s, environment* env)
     // Can I just combine ret into expr
     case RETURN_STMT:
         out = _eval_expr(s->data.ret.value, env);
+        _cleanup_expr(s->data.ret.value);
         if (_is_error(out))
         {
             return out;
@@ -754,9 +747,12 @@ object _eval_stmt(stmt* s, environment* env)
         out.type = RET_OBJ;
         return out;
     case EXPR_STMT:
-        return _eval_expr(s->data.expr.value, env);
+        out = _eval_expr(s->data.expr.value, env);
+        _cleanup_expr(s->data.expr.value);
+        return out;
     case LET_STMT:
         out = _eval_expr(s->data.let.value, env);
+        _cleanup_expr(s->data.let.value);
         if (_is_error(out))
         {
             return out;

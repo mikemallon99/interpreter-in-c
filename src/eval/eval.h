@@ -41,4 +41,7 @@ typedef struct environment
 object eval_program(stmt_list* p, environment* env);
 env_map new_env_map();
 
+void cleanup_environment(environment* env);
+void cleanup_object(object obj);
+
 #endif

@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <crtdbg.h>
 
 #include "../tokens.h"
 #include "../parser/statements.h"

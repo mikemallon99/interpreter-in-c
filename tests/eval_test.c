@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "../src/parser/parser.h"
@@ -18,6 +19,7 @@ object get_prog_output(char* input_str)
     env.inner = inner;
     env.outer = NULL;
     object out = eval_program(&prog, &env);
+    cleanup_environment(&env);
 
     return out;
 }
@@ -33,7 +35,9 @@ bool assert_prog_output(char* input_str, literal exp_val)
     env.outer = NULL;
     object out = eval_program(&prog, &env);
 
-    printf("%s: %s\n", input_str, literal_string(out.lit));
+    char* out_str = literal_string(out.lit);
+    printf("%s: %s\n", input_str, out_str);
+    free(out_str);
 
     assert(out.lit.type == exp_val.type);
     switch (out.lit.type)
@@ -49,6 +53,9 @@ bool assert_prog_output(char* input_str, literal exp_val)
     default:
         assert(false);
     }
+
+    cleanup_environment(&env);
+    cleanup_object(out);
 }
 
 bool test_eval_int()

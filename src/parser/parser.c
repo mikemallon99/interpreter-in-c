@@ -225,6 +225,7 @@ stmt_list _parse_block_stmt(parser* p)
         // Skip over semicolon
         _next_parser_token(p);
     }
+    free(p->cur_token.value);
 
     return block;
 }

@@ -332,8 +332,7 @@ environment* _copy_environment(environment* env) {
     }
     environment* new_env = calloc(1, sizeof(environment));
     new_env->outer = env->outer;
-    new_env->inner = env->inner;
-    _increment_env_refs(env);
+    _increment_env_refs(env->outer);
     return new_env;
 }
 
@@ -428,8 +427,10 @@ int _get_hash_env(char* str)
 
 void _insert_env(env_map env, char* key, object val)
 {
-    env_map_entry entry = {key, val};
-    env.entries[_get_hash_env(key)] = entry;
+    char* entry_key = malloc(strlen(key) + 1);
+    strcpy(entry_key, key);
+    env_map_entry entry = {entry_key, val};
+    env.entries[_get_hash_env(entry_key)] = entry;
 }
 
 object _get_env(env_map env, char* key)
@@ -739,7 +740,7 @@ object _eval_expr(expr* e, environment* env)
         }
         _increment_env_refs(func.lit.data.fn.env->outer);
         out = eval_program(&func.lit.data.fn.body, func.lit.data.fn.env);
-        cleanup_environment(func.lit.data.fn.env);
+        cleanup_object(func);
         return out;
     default:
         return _create_null_obj();
@@ -755,7 +756,6 @@ object _eval_stmt(stmt* s, environment* env)
     // Can I just combine ret into expr
     case RETURN_STMT:
         out = _eval_expr(s->data.ret.value, env);
-        _cleanup_expr(s->data.ret.value);
         if (_is_error(out))
         {
             return out;
@@ -764,11 +764,9 @@ object _eval_stmt(stmt* s, environment* env)
         return out;
     case EXPR_STMT:
         out = _eval_expr(s->data.expr.value, env);
-        _cleanup_expr(s->data.expr.value);
         return out;
     case LET_STMT:
         out = _eval_expr(s->data.let.value, env);
-        _cleanup_expr(s->data.let.value);
         if (_is_error(out))
         {
             return out;

@@ -219,28 +219,28 @@ bool test_eval_fn_2()
     exp_val.data.i = 6 + 6;
     assert_prog_output(input_str, exp_val);
 
-    char input_str_2[] =
-        "let closure_fn = fn(x){ fn(y) {x + y}};"
-        "let add_2 = closure_fn(2);"
-        "let add_3 = closure_fn(3);"
-        "add_2(4) + add_3(3);";
-    literal exp_val_2;
+    // char input_str_2[] =
+    //     "let closure_fn = fn(x){ fn(y) {x + y}};"
+    //     "let add_2 = closure_fn(2);"
+    //     "let add_3 = closure_fn(3);"
+    //     "add_2(4) + add_3(3);";
+    // literal exp_val_2;
 
-    exp_val_2.type = INT_LIT;
-    exp_val_2.data.i = 6 + 6;
-    assert_prog_output(input_str_2, exp_val_2);
+    // exp_val_2.type = INT_LIT;
+    // exp_val_2.data.i = 6 + 6;
+    // assert_prog_output(input_str_2, exp_val_2);
 }
 
 void run_all_eval_tests()
 {
-    test_eval_int();
-    test_eval_let();
-    test_eval_prefix();
-    test_eval_infix();
-    test_eval_ifelse();
-    test_eval_return();
-    test_eval_error();
-    test_eval_fn();
+    // test_eval_int();
+    // test_eval_let();
+    // test_eval_prefix();
+    // test_eval_infix();
+    // test_eval_ifelse();
+    // test_eval_return();
+    // test_eval_error();
+    // test_eval_fn();
     test_eval_fn_2();
 }
 

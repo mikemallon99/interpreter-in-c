@@ -34,7 +34,6 @@ bool assert_prog_output(char* input_str, literal exp_val)
     env.inner = inner;
     env.outer = NULL;
     object out = eval_program(&prog, &env);
-    free(prog.statements);
 
     char* out_str = literal_string(out.lit);
     printf("%s: %s\n", input_str, out_str);
@@ -55,6 +54,7 @@ bool assert_prog_output(char* input_str, literal exp_val)
         assert(false);
     }
 
+    cleanup_stmt_list(prog);
     force_cleanup_environment(&env);
     cleanup_object(out);
 }
@@ -195,15 +195,15 @@ bool test_eval_fn()
     exp_val_1.data.i = 4;
     assert_prog_output(input_str_1, exp_val_1);
 
-    // char input_str_2[] =
-    //     "let closure_fn = fn(x){ fn(y) {x + y}};"
-    //     "let add_2 = closure_fn(2);"
-    //     "add_2(4);";
+    char input_str_2[] =
+        "let closure_fn = fn(x){ fn(y) {x + y}};"
+        "let add_2 = closure_fn(2);"
+        "add_2(4);";
 
-    // literal exp_val_2;
-    // exp_val_2.type = INT_LIT;
-    // exp_val_2.data.i = 6;
-    // assert_prog_output(input_str_2, exp_val_2);
+    literal exp_val_2;
+    exp_val_2.type = INT_LIT;
+    exp_val_2.data.i = 6;
+    assert_prog_output(input_str_2, exp_val_2);
 }
 
 bool test_eval_fn_2()
@@ -219,28 +219,28 @@ bool test_eval_fn_2()
     exp_val.data.i = 6 + 6;
     assert_prog_output(input_str, exp_val);
 
-    // char input_str_2[] =
-    //     "let closure_fn = fn(x){ fn(y) {x + y}};"
-    //     "let add_2 = closure_fn(2);"
-    //     "let add_3 = closure_fn(3);"
-    //     "add_2(4) + add_3(3);";
-    // literal exp_val_2;
+    char input_str_2[] =
+        "let closure_fn = fn(x){ fn(y) {x + y}};"
+        "let add_2 = closure_fn(2);"
+        "let add_3 = closure_fn(3);"
+        "add_2(4) + add_3(3);";
+    literal exp_val_2;
 
-    // exp_val_2.type = INT_LIT;
-    // exp_val_2.data.i = 6 + 6;
-    // assert_prog_output(input_str_2, exp_val_2);
+    exp_val_2.type = INT_LIT;
+    exp_val_2.data.i = 6 + 6;
+    assert_prog_output(input_str_2, exp_val_2);
 }
 
 void run_all_eval_tests()
 {
-    // test_eval_int();
-    // test_eval_let();
-    // test_eval_prefix();
-    // test_eval_infix();
-    // test_eval_ifelse();
-    // test_eval_return();
-    // test_eval_error();
-    // test_eval_fn();
+    test_eval_int();
+    test_eval_let();
+    test_eval_prefix();
+    test_eval_infix();
+    test_eval_ifelse();
+    test_eval_return();
+    test_eval_error();
+    test_eval_fn();
     test_eval_fn_2();
 }
 

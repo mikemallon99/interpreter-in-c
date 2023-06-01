@@ -77,7 +77,6 @@ object eval_program(stmt_list* p, environment* env)
         }
     }
 
-
     return out;
 }
 
@@ -123,15 +122,13 @@ void _cleanup_expr(expr* ex) {
             _cleanup_token(ex->data.pre.op);
             break;
         case LITERAL_EXPR:
-            // _cleanup_literal(ex->data.lit);
+            _cleanup_literal(ex->data.lit);
             break;
         case IF_EXPR:
             _cleanup_expr(ex->data.ifelse.condition);
-            // cleanup_stmt_list(ex->data.ifelse.consequence);
-            free(ex->data.ifelse.consequence.statements);
+            cleanup_stmt_list(ex->data.ifelse.consequence);
             if (ex->data.ifelse.has_alt) {
-                free(ex->data.ifelse.alternative.statements);
-                // cleanup_stmt_list(ex->data.ifelse.alternative);
+                cleanup_stmt_list(ex->data.ifelse.alternative);
             }
             break;
         case CALL_EXPR:
@@ -250,10 +247,10 @@ void _cleanup_literal(literal lit) {
         case FN_LIT:
             _cleanup_token_list(lit.data.fn.params);
             cleanup_stmt_list(lit.data.fn.body);
-            cleanup_environment(lit.data.fn.env);
             break;
         case IDENT_LIT:
             _cleanup_token(lit.data.t);
+            break;
         default:
             break;
     }
@@ -264,12 +261,12 @@ literal _copy_literal(literal lit) {
     new_lit.type = lit.type;
     switch (lit.type) {
         case FN_LIT:
-            new_lit.data.fn.body = _copy_stmt_list(lit.data.fn.body);
-            new_lit.data.fn.params = _copy_token_list(lit.data.fn.params);
+            new_lit.data.fn.body = lit.data.fn.body;
+            new_lit.data.fn.params = lit.data.fn.params;
             new_lit.data.fn.env = _copy_environment(lit.data.fn.env);
             break;
         case IDENT_LIT:
-            new_lit.data.t = _copy_token(lit.data.t);
+            new_lit.data.t = lit.data.t;
             break;
         case INT_LIT:
             new_lit.data.i = lit.data.i;
@@ -287,7 +284,9 @@ void cleanup_object(object obj) {
     if (obj.type == ERR_OBJ) {
         free(obj.err);
     }
-    _cleanup_literal(obj.lit);
+    if (obj.lit.type == FN_LIT) {
+        cleanup_environment(obj.lit.data.fn.env);
+    }
 }
 
 object _copy_object(object obj) {
@@ -387,7 +386,7 @@ object _create_lit_obj(literal l)
 {
     object obj;
     obj.type = LIT_OBJ;
-    obj.lit = l;
+    obj.lit = _copy_literal(l);
     return obj;
 }
 
@@ -456,6 +455,7 @@ object _get_literal(environment* env, char* key)
     val = _get_env(env->inner, key);
     if (val.type == ERR_OBJ && env->outer != NULL)
     {
+        cleanup_object(val);
         return _get_literal(env->outer, key);
     }
     return val;
@@ -666,13 +666,15 @@ object _eval_expr(expr* e, environment* env)
         {
             return _copy_object(_get_literal(env, e->data.lit.data.t.value));
         }
-        else if (e->data.lit.type == FN_LIT)
+
+        out = _create_lit_obj(e->data.lit);
+        if (e->data.lit.type == FN_LIT)
         {
-            e->data.lit.data.fn.env = (environment*)calloc(1, sizeof(environment));
-            e->data.lit.data.fn.env->outer = env;
-            _increment_env_refs(e->data.lit.data.fn.env->outer);
+            out.lit.data.fn.env = (environment*)calloc(1, sizeof(environment));
+            out.lit.data.fn.env->outer = env;
+            _increment_env_refs(out.lit.data.fn.env->outer);
         }
-        return _create_lit_obj(e->data.lit);
+        return out;
     case PREFIX_EXPR:
         out = _eval_expr(e->data.pre.right, env);
         if (_is_error(out))
@@ -738,7 +740,6 @@ object _eval_expr(expr* e, environment* env)
             }
             _insert_env(func.lit.data.fn.env->inner, func.lit.data.fn.params.tokens[i].value, out);
         }
-        _increment_env_refs(func.lit.data.fn.env->outer);
         out = eval_program(&func.lit.data.fn.body, func.lit.data.fn.env);
         cleanup_object(func);
         return out;

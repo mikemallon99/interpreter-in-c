@@ -35,7 +35,6 @@ void _cleanup_token_list(token_list tok_lst);
 void _cleanup_expr(expr* ex);
 void _cleanup_expr_list(expr_list ex_lst);
 void _cleanup_stmt(stmt st);
-void _cleanup_stmt_list(stmt_list st_lst);
 void _cleanup_literal(literal lit);
 void _cleanup_env_map(env_map env);
 
@@ -128,9 +127,11 @@ void _cleanup_expr(expr* ex) {
             break;
         case IF_EXPR:
             _cleanup_expr(ex->data.ifelse.condition);
-            _cleanup_stmt_list(ex->data.ifelse.consequence);
+            // cleanup_stmt_list(ex->data.ifelse.consequence);
+            free(ex->data.ifelse.consequence.statements);
             if (ex->data.ifelse.has_alt) {
-                _cleanup_stmt_list(ex->data.ifelse.alternative);
+                free(ex->data.ifelse.alternative.statements);
+                // cleanup_stmt_list(ex->data.ifelse.alternative);
             }
             break;
         case CALL_EXPR:
@@ -229,7 +230,7 @@ stmt _copy_stmt(stmt st) {
     return new_st;
 }
 
-void _cleanup_stmt_list(stmt_list st_lst) {
+void cleanup_stmt_list(stmt_list st_lst) {
     for (int i = 0; i < st_lst.count; i++) {
         _cleanup_stmt(st_lst.statements[i]);
     }
@@ -248,7 +249,7 @@ void _cleanup_literal(literal lit) {
     switch (lit.type) {
         case FN_LIT:
             _cleanup_token_list(lit.data.fn.params);
-            _cleanup_stmt_list(lit.data.fn.body);
+            cleanup_stmt_list(lit.data.fn.body);
             cleanup_environment(lit.data.fn.env);
             break;
         case IDENT_LIT:
@@ -344,6 +345,20 @@ void cleanup_environment(environment* env) {
     if (env->inner.ref_count > 0) {
         return;
     }
+    if (env->inner.entries == NULL) {
+        return;
+    }
+    for (int i = 0; i < ENV_MAP_SIZE; i++) {
+        if (env->inner.entries[i].key == NULL) {
+            continue;
+        }
+        free(env->inner.entries[i].key);
+        cleanup_object(env->inner.entries[i].value);
+    }
+    free(env->inner.entries);
+}
+
+void force_cleanup_environment(environment* env) {
     for (int i = 0; i < ENV_MAP_SIZE; i++) {
         if (env->inner.entries[i].key == NULL) {
             continue;
@@ -722,8 +737,9 @@ object _eval_expr(expr* e, environment* env)
             }
             _insert_env(func.lit.data.fn.env->inner, func.lit.data.fn.params.tokens[i].value, out);
         }
+        _increment_env_refs(func.lit.data.fn.env->outer);
         out = eval_program(&func.lit.data.fn.body, func.lit.data.fn.env);
-        cleanup_environment(env);
+        cleanup_environment(func.lit.data.fn.env);
         return out;
     default:
         return _create_null_obj();

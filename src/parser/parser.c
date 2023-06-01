@@ -315,9 +315,11 @@ token_list _parse_fn_params(parser* p)
         {
             return params;
         }
-        free(p->cur_token.value);
-
-        return params;
+        else 
+        {
+            free(p->cur_token.value);
+            return params;
+        }
     }
 }
 
@@ -346,9 +348,10 @@ expr_list _parse_call_args(parser* p)
         {
             return params;
         }
-        free(p->cur_token.value);
-
-        return params;
+        else {
+            free(p->cur_token.value);
+            return params;
+        }
     }
 }
 
@@ -515,6 +518,7 @@ stmt _parse_expr_stmt(parser* p)
     if (_peek_token_is(p, SEMICOLON))
     {
         _next_parser_token(p);
+        free(p->cur_token.value);
     }
 
     new_stmt.type = EXPR_STMT;

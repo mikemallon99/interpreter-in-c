@@ -42,6 +42,8 @@ object eval_program(stmt_list* p, environment* env);
 env_map new_env_map();
 
 void cleanup_environment(environment* env);
+void force_cleanup_environment(environment* env);
 void cleanup_object(object obj);
+void cleanup_stmt_list(stmt_list st_lst);
 
 #endif

@@ -1,6 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
-#include <crtdbg.h>
+// #include <crtdbg.h>
 #include <stdbool.h>
 
 #include "lexer.h"

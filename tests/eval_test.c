@@ -231,6 +231,18 @@ bool test_eval_fn_2()
     assert_prog_output(input_str_2, exp_val_2);
 }
 
+bool test_eval_fn_rec()
+{
+    char input_str[] =
+        "let factorial = fn(x){ if (x == 0) {return 1;} else {return x * factorial(x - 1);}; };"
+        "factorial(3);";
+    literal exp_val;
+
+    exp_val.type = INT_LIT;
+    exp_val.data.i = 6;
+    assert_prog_output(input_str, exp_val);
+}
+
 void run_all_eval_tests()
 {
     test_eval_int();
@@ -242,6 +254,7 @@ void run_all_eval_tests()
     test_eval_error();
     test_eval_fn();
     test_eval_fn_2();
+    test_eval_fn_rec();
 }
 
 #endif

@@ -16,7 +16,7 @@ bool _is_function(object obj);
 bool _is_error(object obj);
 object _cast_as_bool(object l);
 
-int _get_hash_env(char* str);
+unsigned long _get_hash_env(char* str);
 void _insert_env(env_map map, char* key, object val);
 object _get_env(env_map map, char* key);
 object _get_literal(environment* env, char* key);
@@ -90,7 +90,7 @@ void _cleanup_token(token tok) {
 token _copy_token(token tok) {
     token new_tok;
     new_tok.type = tok.type;
-    new_tok.value = malloc(strlen(tok.value)+1);
+    new_tok.value = (char*)malloc(strlen(tok.value)+1);
     strcpy(new_tok.value, tok.value);
     return new_tok;
 }
@@ -142,7 +142,7 @@ void _cleanup_expr(expr* ex) {
 }
 
 expr* _copy_expr(expr* ex) {
-    expr* new_ex = malloc(sizeof(expr));
+    expr* new_ex = (expr*)malloc(sizeof(expr));
     new_ex->type = ex->type;
     switch (ex->type) {
         case INFIX_EXPR:
@@ -293,7 +293,7 @@ object _copy_object(object obj) {
     object new_obj;
     new_obj.type = obj.type;
     if (obj.type == ERR_OBJ) {
-        new_obj.err = malloc(strlen(obj.err) + 1);
+        new_obj.err = (char*)malloc(strlen(obj.err) + 1);
         strcpy(new_obj.err, obj.err);
     }
     new_obj.lit = _copy_literal(obj.lit);
@@ -329,31 +329,34 @@ environment* _copy_environment(environment* env) {
     if (env == NULL) {
         return NULL;
     }
-    environment* new_env = calloc(1, sizeof(environment));
+    environment* new_env = (environment*)calloc(1, sizeof(environment));
     new_env->outer = env->outer;
     _increment_env_refs(env->outer);
     return new_env;
 }
 
 void cleanup_environment(environment* env) {
+    env->inner.ref_count -= 1;
+    if (env->inner.ref_count <= 0) {
+        if (env->inner.entries == NULL) {
+            return;
+        }
+        for (int i = 0; i < ENV_MAP_SIZE; i++) {
+            if (env->inner.entries[i].key == NULL) {
+                continue;
+            }
+            free(env->inner.entries[i].key);
+            env->inner.entries[i].key = NULL;
+            cleanup_object(env->inner.entries[i].value);
+        }
+        free(env->inner.entries);
+        env->inner.entries = NULL;
+        return;
+    }
+
     if (env->outer != NULL) {
         cleanup_environment(env->outer);
     }
-    env->inner.ref_count -= 1;
-    if (env->inner.ref_count > 0) {
-        return;
-    }
-    if (env->inner.entries == NULL) {
-        return;
-    }
-    for (int i = 0; i < ENV_MAP_SIZE; i++) {
-        if (env->inner.entries[i].key == NULL) {
-            continue;
-        }
-        free(env->inner.entries[i].key);
-        cleanup_object(env->inner.entries[i].value);
-    }
-    free(env->inner.entries);
 }
 
 void force_cleanup_environment(environment* env) {
@@ -395,7 +398,7 @@ object _create_err_obj(const char* format, ...)
     object obj;
     obj.type = ERR_OBJ;
 
-    char* buffer = malloc(256);
+    char* buffer = (char*)malloc(256);
     va_list args;
     va_start(args, format);
     vsprintf(buffer, format, args);
@@ -415,9 +418,9 @@ bool _is_function(object obj)
 }
 
 // Found a random string hash function
-int _get_hash_env(char* str)
+unsigned long _get_hash_env(char* str)
 {
-    int hash = 5381;
+    unsigned long hash = 5381;
     int c;
     while ((c =* str++))
         hash = ((hash << 5) + hash) + c; /* hash*  33 + c */
@@ -426,7 +429,7 @@ int _get_hash_env(char* str)
 
 void _insert_env(env_map env, char* key, object val)
 {
-    char* entry_key = malloc(strlen(key) + 1);
+    char* entry_key = (char*)malloc(strlen(key) + 1);
     strcpy(entry_key, key);
     env_map_entry entry = {entry_key, val};
     env.entries[_get_hash_env(entry_key)] = entry;
@@ -598,6 +601,7 @@ object _lit_neq(object left, object right)
 object _eval_infix(token op, object left, object right)
 {
     object out;
+    out.type = LIT_OBJ;
 
     if (left.lit.type != right.lit.type)
     {
@@ -718,6 +722,7 @@ object _eval_expr(expr* e, environment* env)
             return _create_null_obj();
         }
     case CALL_EXPR:
+        // Copy of function with incremented environment
         func = _eval_expr(e->data.call.func, env);
         if (_is_error(func))
         {

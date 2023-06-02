@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <crtdbg.h>
+// #include <crtdbg.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -18,6 +18,7 @@ void start()
     env_map inner = new_env_map();
     env.inner = inner;
     env.outer = NULL;
+
 
     while (true)
     {
@@ -41,5 +42,8 @@ void start()
         {
             printf("%s\n", literal_string(out.lit));
         }
+        cleanup_object(out);
     }
+
+    force_cleanup_environment(&env);
 }

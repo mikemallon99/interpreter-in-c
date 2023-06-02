@@ -47,7 +47,6 @@ void test_simple()
         // else {
         //     printf("%s == %s\n", cur_token.value, tests[i].value);
         // }
-        free(cur_token.value);
     }
     if (passed)
     {
@@ -178,7 +177,6 @@ void test_code()
         {
             printf("%s == %s\n", cur_token.value, tests[i].value);
         }
-        free(cur_token.value);
     }
     if (passed)
     {

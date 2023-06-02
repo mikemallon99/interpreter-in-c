@@ -40,99 +40,63 @@ token next_lexer_token(lexer* l)
     case '=':
         if (_peek_char(l) == '=')
         {
-            char_str = calloc(3, 1);
-            char_str[0] = l->cur_byte;
             _read_char(l);
-            char_str[1] = l->cur_byte;
-            t = (token){EQ, char_str};
+            t = (token){EQ, "=="};
         }
         else
         {
-            char_str = calloc(2, 1);
-            char_str[0] = l->cur_byte;
-            t = (token){ASSIGN, char_str};
+            t = (token){ASSIGN, "="};
         }
         break;
     case '+':
-        char_str = calloc(2, 1);
-        char_str[0] = l->cur_byte;
-        t = (token){PLUS, char_str};
+        t = (token){PLUS, "+"};
         break;
     case '-':
-        char_str = calloc(2, 1);
-        char_str[0] = l->cur_byte;
-        t = (token){MINUS, char_str};
+        t = (token){MINUS, "-"};
         break;
     case '!':
         if (_peek_char(l) == '=')
         {
-            char_str = calloc(3, 1);
-            char_str[0] = l->cur_byte;
             _read_char(l);
-            char_str[1] = l->cur_byte;
-            t = (token){NOT_EQ, char_str};
+            t = (token){NOT_EQ, "!="};
         }
         else
         {
-            char_str = calloc(2, 1);
-            char_str[0] = l->cur_byte;
-            t = (token){BANG, char_str};
+            t = (token){BANG, "!"};
         }
         break;
     case '*':
-        char_str = calloc(2, 1);
-        char_str[0] = l->cur_byte;
-        t = (token){ASTERISK, char_str};
+        t = (token){ASTERISK, "*"};
         break;
     case '/':
-        char_str = calloc(2, 1);
-        char_str[0] = l->cur_byte;
-        t = (token){SLASH, char_str};
+        t = (token){SLASH, "/"};
         break;
     case '<':
-        char_str = calloc(2, 1);
-        char_str[0] = l->cur_byte;
-        t = (token){LT, char_str};
+        t = (token){LT, "<"};
         break;
     case '>':
-        char_str = calloc(2, 1);
-        char_str[0] = l->cur_byte;
-        t = (token){GT, char_str};
+        t = (token){GT, ">"};
         break;
     case ';':
-        char_str = calloc(2, 1);
-        char_str[0] = l->cur_byte;
-        t = (token){SEMICOLON, char_str};
+        t = (token){SEMICOLON, ";"};
         break;
     case '(':
-        char_str = calloc(2, 1);
-        char_str[0] = l->cur_byte;
-        t = (token){LPAREN, char_str};
+        t = (token){LPAREN, "("};
         break;
     case ')':
-        char_str = calloc(2, 1);
-        char_str[0] = l->cur_byte;
-        t = (token){RPAREN, char_str};
+        t = (token){RPAREN, ")"};
         break;
     case ',':
-        char_str = calloc(2, 1);
-        char_str[0] = l->cur_byte;
-        t = (token){COMMA, char_str};
+        t = (token){COMMA, ","};
         break;
     case '{':
-        char_str = calloc(2, 1);
-        char_str[0] = l->cur_byte;
-        t = (token){LBRACE, char_str};
+        t = (token){LBRACE, "{"};
         break;
     case '}':
-        char_str = calloc(2, 1);
-        char_str[0] = l->cur_byte;
-        t = (token){RBRACE, char_str};
+        t = (token){RBRACE, "}"};
         break;
     case 0:
-        char_str = calloc(2, 1);
-        char_str[0] = l->cur_byte;
-        t = (token){EOF_T, char_str};
+        t = (token){EOF_T, ""};
         break;
     default:
         if (_is_letter(l->cur_byte))
@@ -149,9 +113,7 @@ token next_lexer_token(lexer* l)
         }
         else
         {
-            char_str = calloc(2, 1);
-            char_str[0] = l->cur_byte;
-            t = (token){ILLEGAL, char_str};
+            t = (token){ILLEGAL, &l->cur_byte};
         }
     }
 

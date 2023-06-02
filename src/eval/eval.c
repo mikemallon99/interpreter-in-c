@@ -115,11 +115,9 @@ void _cleanup_expr(expr* ex) {
         case INFIX_EXPR:
             _cleanup_expr(ex->data.inf.left);
             _cleanup_expr(ex->data.inf.right);
-            _cleanup_token(ex->data.inf.op);
             break;
         case PREFIX_EXPR:
             _cleanup_expr(ex->data.pre.right);
-            _cleanup_token(ex->data.pre.op);
             break;
         case LITERAL_EXPR:
             _cleanup_literal(ex->data.lit);

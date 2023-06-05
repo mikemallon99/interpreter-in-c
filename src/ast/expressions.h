@@ -11,6 +11,7 @@
 typedef enum
 {
     INT_LIT,
+    STRING_LIT,
     BOOL_LIT,
     IDENT_LIT,
     FN_LIT,
@@ -39,6 +40,7 @@ typedef union
     int i;
     bool b;
     token t;
+    char* s;
     struct fn_lit fn;
 } literal_data;
 

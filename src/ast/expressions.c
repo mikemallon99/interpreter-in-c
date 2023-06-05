@@ -113,6 +113,9 @@ char* literal_string(literal lit)
     case BOOL_LIT:
         sprintf(lit_str, "%s", lit.data.b ? "true" : "false");
         break;
+    case STRING_LIT:
+        sprintf(lit_str, "%s", lit.data.s);
+        break;
     case FN_LIT:
         str1 = token_list_string(&lit.data.fn.params);
         str2 = program_string(&lit.data.fn.body);

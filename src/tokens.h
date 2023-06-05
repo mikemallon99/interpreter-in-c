@@ -8,6 +8,7 @@ typedef enum
 
     // Identifiers & Literals
     IDENT,
+    STRING,
     INT,
 
     // Operators
@@ -26,6 +27,7 @@ typedef enum
     // Delimiters
     COMMA,
     SEMICOLON,
+    DB_QUOTE,
 
     LPAREN,
     RPAREN,

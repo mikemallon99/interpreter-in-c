@@ -272,6 +272,10 @@ literal _copy_literal(literal lit) {
         case BOOL_LIT:
             new_lit.data.b = lit.data.b;
             break;
+        case STRING_LIT:
+            new_lit.data.s = (char*)calloc(strlen(lit.data.s)+1, 1);
+            strcpy(new_lit.data.s, lit.data.s);
+            break;
         default:
             break;
     }
@@ -479,6 +483,14 @@ object _cast_as_bool(object l)
     case FN_LIT:
         b.lit.data.b = l.lit.data.fn.body.count;
         break;
+    case STRING_LIT:
+        if (strlen(l.lit.data.s) > 0) {
+            b.lit.data.b = true;
+        }
+        else {
+            b.lit.data.b = false;
+        }
+        break;
     case NULL_LIT:
         b.lit.data.b = false;
         break;
@@ -613,6 +625,13 @@ object _eval_infix(token op, object left, object right)
         {
             out.lit.type = INT_LIT;
             out.lit.data.i = left.lit.data.i + right.lit.data.i;
+            return out;
+        }
+        else if (left.lit.type == STRING_LIT)
+        {
+            out.lit.type = STRING_LIT;
+            out.lit.data.s = (char*)calloc(strlen(left.lit.data.s) + strlen(right.lit.data.s) + 1, 1);
+            sprintf(out.lit.data.s, "%s%s", left.lit.data.s, right.lit.data.s);
             return out;
         }
         return _create_err_obj("operator not supported: %s", op.value);

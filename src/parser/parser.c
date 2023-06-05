@@ -147,6 +147,10 @@ expr* _parse_literal(parser* p)
         lit.data.b = false;
         free(p->cur_token.value);
         break;
+    case STRING:
+        lit.type = STRING_LIT;
+        lit.data.s = p->cur_token.value;
+        break;
     default:
         lit.type = NULL_LIT;
         free(p->cur_token.value);
@@ -398,6 +402,7 @@ expr* _parse_expression(parser* p, precedence prec)
     case INT:
     case TRUE:
     case FALSE:
+    case STRING:
         left_expr = _parse_literal(p);
         break;
     case MINUS:

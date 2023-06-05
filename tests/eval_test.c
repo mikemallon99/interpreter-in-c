@@ -48,6 +48,9 @@ bool assert_prog_output(char* input_str, literal exp_val)
     case BOOL_LIT:
         assert(out.lit.data.b == exp_val.data.b);
         break;
+    case STRING_LIT:
+        assert(strcmp(out.lit.data.s, exp_val.data.s) == 0);
+        break;
     case NULL_LIT:
         break;
     default:
@@ -243,6 +246,29 @@ bool test_eval_fn_rec()
     assert_prog_output(input_str, exp_val);
 }
 
+bool test_eval_string()
+{
+    char input_str[] =
+        "let s = \"test string!!\";"
+        "s;";
+
+    literal exp_val;
+    exp_val.type = STRING_LIT;
+    exp_val.data.s = "test string!!";
+    assert_prog_output(input_str, exp_val);
+
+    char input_str_2[] =
+        "let one = \"one\";"
+        "let two = \"two\";"
+        "let three = \"three\";"
+        "one + \" \" + two + \" \" + three;";
+
+    literal exp_val_2;
+    exp_val_2.type = STRING_LIT;
+    exp_val_2.data.s = "one two three";
+    assert_prog_output(input_str_2, exp_val_2);
+}
+
 void run_all_eval_tests()
 {
     test_eval_int();
@@ -255,6 +281,7 @@ void run_all_eval_tests()
     test_eval_fn();
     test_eval_fn_2();
     test_eval_fn_rec();
+    test_eval_string();
 }
 
 #endif

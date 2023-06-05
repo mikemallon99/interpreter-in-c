@@ -10,6 +10,7 @@ char _peek_char(lexer* l);
 void _read_char(lexer* l);
 char* _read_int(lexer* l);
 char* _read_identifier(lexer* l);
+char* _read_string(lexer* l);
 
 bool _is_number(char cur_byte);
 bool _is_letter(char cur_byte);
@@ -68,6 +69,10 @@ token next_lexer_token(lexer* l)
     case '*':
         t = (token){ASTERISK, "*"};
         break;
+    case '"':
+        char* new_str = _read_string(l);
+        t = (token){STRING, new_str};
+        break;
     case '/':
         t = (token){SLASH, "/"};
         break;
@@ -122,6 +127,21 @@ token next_lexer_token(lexer* l)
 }
 
 // PRIVATE FUNCTIONS
+
+char* _read_string(lexer* l) 
+{
+    // Skip over first quote
+    _read_char(l);
+    int position = l->position;
+
+    while (l->cur_byte != '"') {
+        _read_char(l);
+    }
+    int str_len = l->position - position;
+    char* identifier = (char* )calloc(str_len + 1, 1);
+    strncpy(identifier, l->input_string + position, str_len);
+    return identifier;
+}
 
 char _peek_char(lexer* l)
 {

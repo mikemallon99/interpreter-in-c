@@ -282,6 +282,28 @@ bool test_eval_builtin()
     assert_prog_output(input_str, exp_val);
 }
 
+bool test_eval_array()
+{
+    char input_str_1[] =
+        "let arr = [1, 2, 3];"
+        "arr[1]";
+
+    literal exp_val_1;
+    exp_val_1.type = INT_LIT;
+    exp_val_1.data.i = 2;
+    assert_prog_output(input_str_1, exp_val_1);
+
+    char input_str_2[] =
+        "let arr = [1, 1 + 1, \"333\", fn() {4}];"
+        "let out = arr[0] + arr[1] + len(arr[2]) + arr[3]();"
+        "out";
+
+    literal exp_val_2;
+    exp_val_2.type = INT_LIT;
+    exp_val_2.data.i = 10;
+    assert_prog_output(input_str_2, exp_val_2);
+}
+
 void run_all_eval_tests()
 {
     test_eval_int();
@@ -296,6 +318,7 @@ void run_all_eval_tests()
     test_eval_fn_rec();
     test_eval_string();
     test_eval_builtin();
+    test_eval_array();
 }
 
 #endif

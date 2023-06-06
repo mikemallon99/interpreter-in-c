@@ -190,6 +190,14 @@ expr* _parse_infix(parser* p, expr* left)
     _next_parser_token(p);
 
     inf.right = _parse_expression(p, get_precedence(inf.op));
+    
+    // Array index infix will have a ] at the end
+    if (inf.op.type == LBRACKET) {
+        if (!_expect_peek(p, RBRACKET))
+        {
+            return NULL;
+        }
+    }
 
     ex->data.inf = inf;
     return ex;
@@ -391,6 +399,37 @@ expr* _parse_fn(parser* p)
     return ex;
 }
 
+expr* _parse_array(parser* p) {
+    expr* ex = malloc(sizeof(expr));
+    ex->type = LITERAL_EXPR;
+    ex->data.lit.type = ARRAY_LIT;
+    ex->data.lit.data.arr = new_expr_list();
+
+    if (_peek_token_is(p, RBRACKET))
+    {
+        _next_parser_token(p);
+        return ex;
+    }
+
+    while (true)
+    {
+        _next_parser_token(p);
+        append_expr_list(&ex->data.lit.data.arr, _parse_expression(p, LOWEST_PR));
+
+        if (_peek_token_is(p, COMMA))
+        {
+            _next_parser_token(p);
+        }
+        else if (!_expect_peek(p, RBRACKET))
+        {
+            return ex;
+        }
+        else {
+            return ex;
+        }
+    }
+}
+
 expr* _parse_expression(parser* p, precedence prec)
 {
     // Inital prefix function
@@ -398,28 +437,31 @@ expr* _parse_expression(parser* p, precedence prec)
     switch (p->cur_token.type)
     {
         // Literals
-    case IDENT:
-    case INT:
-    case TRUE:
-    case FALSE:
-    case STRING:
-        left_expr = _parse_literal(p);
-        break;
-    case MINUS:
-    case BANG:
-        left_expr = _parse_prefix(p);
-        break;
-    case LPAREN:
-        left_expr = _parse_group(p);
-        break;
-    case IF:
-        left_expr = _parse_if(p);
-        break;
-    case FUNCTION:
-        left_expr = _parse_fn(p);
-        break;
-    default:
-        left_expr = NULL;
+        case IDENT:
+        case INT:
+        case TRUE:
+        case FALSE:
+        case STRING:
+            left_expr = _parse_literal(p);
+            break;
+        case MINUS:
+        case BANG:
+            left_expr = _parse_prefix(p);
+            break;
+        case LPAREN:
+            left_expr = _parse_group(p);
+            break;
+        case IF:
+            left_expr = _parse_if(p);
+            break;
+        case FUNCTION:
+            left_expr = _parse_fn(p);
+            break;
+        case LBRACKET:
+            left_expr = _parse_array(p);
+            break;
+        default:
+            left_expr = NULL;
     }
 
     while (!_peek_token_is(p, SEMICOLON) && prec < _peek_precedence(p))
@@ -427,12 +469,12 @@ expr* _parse_expression(parser* p, precedence prec)
         _next_parser_token(p);
         switch (p->cur_token.type)
         {
-        case LPAREN:
-            left_expr = _parse_call(p, left_expr);
-            break;
-        default:
-            left_expr = _parse_infix(p, left_expr);
-            break;
+            case LPAREN:
+                left_expr = _parse_call(p, left_expr);
+                break;
+            default:
+                left_expr = _parse_infix(p, left_expr);
+                break;
         }
     }
 

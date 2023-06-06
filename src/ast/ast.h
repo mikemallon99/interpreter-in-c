@@ -11,7 +11,8 @@ typedef enum
     SUM_PR,
     PRODUCT_PR,
     PREFIX_PR,
-    CALL_PR
+    CALL_PR,
+    INDEX_PR
 } precedence;
 
 precedence get_precedence(token t);

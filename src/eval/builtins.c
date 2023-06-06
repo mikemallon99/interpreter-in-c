@@ -38,24 +38,3 @@ object _string_len(object input_obj)
     return create_lit_obj(out);
 }
 
-
-object_list new_object_list()
-{
-    object_list new_list;
-    new_list.capacity = 1;
-    new_list.objs = (object*)malloc(new_list.capacity * sizeof(object));
-    new_list.count = 0;
-    return new_list;
-}
-
-void append_object_list(object_list* cur_list, object new_object)
-{
-    if ((cur_list->count) >= cur_list->capacity)
-    {
-        cur_list->objs = (object*)realloc(cur_list->objs, cur_list->capacity * 2 * sizeof(object));
-        cur_list->capacity *= 2;
-    }
-    cur_list->objs[cur_list->count] = new_object;
-    cur_list->count++;
-}
-

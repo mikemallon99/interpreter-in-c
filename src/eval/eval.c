@@ -28,6 +28,8 @@ object _eval_prefix(token op, object right);
 object _eval_infix(token op, object left, object right);
 object _eval_expr(expr* e, environment* env);
 object _eval_stmt(stmt* s, environment* env);
+object _eval_array(environment* env, expr_list ex_arr);
+object _index_array(object left, object right);
 
 void _cleanup_token(token tok);
 void _cleanup_token_list(token_list tok_lst);
@@ -77,6 +79,27 @@ object eval_program(stmt_list* p, environment* env)
     }
 
     return out;
+}
+
+
+object_list new_object_list()
+{
+    object_list new_list;
+    new_list.capacity = 1;
+    new_list.objs = (object*)malloc(new_list.capacity * sizeof(object));
+    new_list.count = 0;
+    return new_list;
+}
+
+void append_object_list(object_list* cur_list, object new_object)
+{
+    if ((cur_list->count) >= cur_list->capacity)
+    {
+        cur_list->objs = (object*)realloc(cur_list->objs, cur_list->capacity * 2 * sizeof(object));
+        cur_list->capacity *= 2;
+    }
+    cur_list->objs[cur_list->count] = new_object;
+    cur_list->count++;
 }
 
 
@@ -297,6 +320,13 @@ object _copy_object(object obj) {
         new_obj.err = (char*)malloc(strlen(obj.err) + 1);
         strcpy(new_obj.err, obj.err);
     }
+    else if (obj.type == BUILTIN_OBJ) {
+        new_obj.builtin_fn = obj.builtin_fn;
+    }
+    else if (obj.type == ARRAY_OBJ) {
+        new_obj.arr = obj.arr;
+    }
+
     new_obj.lit = _copy_literal(obj.lit);
     return new_obj;
 }
@@ -639,6 +669,21 @@ object _lit_neq(object left, object right)
     }
 }
 
+object _index_array(object left, object right) 
+{
+    if (left.type != ARRAY_OBJ) {
+        return create_err_obj("Tried to index object that isnt an array.");
+    }
+    if (right.type != LIT_OBJ || right.lit.type != INT_LIT) {
+        return create_err_obj("Tried to index array with object other than an INT.");
+    }
+    if (right.lit.data.i > left.arr.count) {
+        return create_err_obj("Array index is out of range.");
+    }
+
+    return left.arr.objs[right.lit.data.i];
+}
+
 object _eval_infix(token op, object left, object right)
 {
     object out;
@@ -698,9 +743,22 @@ object _eval_infix(token op, object left, object right)
         return _lit_eq(left, right);
     case NOT_EQ:
         return _lit_neq(left, right);
+    case LBRACKET:
+        return _index_array(left, right);
     default:
         return create_err_obj("operator not supported: %s", op.value);
     }
+}
+
+object _eval_array(environment* env, expr_list ex_arr)
+{
+    object out_arr;
+    out_arr.type = ARRAY_OBJ;
+    out_arr.arr = new_object_list();
+    for (int i = 0; i < ex_arr.count; i++) {
+        append_object_list(&out_arr.arr, _eval_expr(ex_arr.exprs[i], env));
+    }
+    return out_arr;
 }
 
 object _eval_expr(expr* e, environment* env)
@@ -717,6 +775,9 @@ object _eval_expr(expr* e, environment* env)
         if (e->data.lit.type == IDENT_LIT)
         {
             return _copy_object(_eval_identifier(env, e->data.lit.data.t.value));
+        }
+        else if (e->data.lit.type == ARRAY_LIT) {
+            return _eval_array(env, e->data.lit.data.arr);
         }
 
         out = create_lit_obj(e->data.lit);

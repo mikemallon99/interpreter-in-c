@@ -15,11 +15,20 @@ typedef enum
     BOOL_LIT,
     IDENT_LIT,
     FN_LIT,
+    ARRAY_LIT,
     NULL_LIT,
 } literal_type;
 
 typedef struct expr expr;
 typedef struct environment environment;
+
+typedef struct expr_list
+{
+    expr** exprs;
+    size_t count;
+    size_t capacity;
+} expr_list;
+
 
 typedef struct token_list
 {
@@ -42,6 +51,7 @@ typedef union
     token t;
     char* s;
     struct fn_lit fn;
+    expr_list arr;
 } literal_data;
 
 typedef struct
@@ -79,13 +89,6 @@ struct if_expr
     bool has_alt;
     stmt_list alternative;
 };
-
-typedef struct expr_list
-{
-    expr** exprs;
-    size_t count;
-    size_t capacity;
-} expr_list;
 
 struct call_expr
 {

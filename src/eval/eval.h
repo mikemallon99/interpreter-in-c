@@ -7,17 +7,33 @@
 typedef enum
 {
     LIT_OBJ,
+    ARRAY_OBJ,
     BUILTIN_OBJ,
     RET_OBJ,
     ERR_OBJ
 } object_type;
+
+typedef struct object object;
+
+typedef struct object_list
+{
+    object* objs;
+    size_t count;
+    size_t capacity;
+} object_list;
+
+typedef enum
+{
+    BUILTIN_LEN
+} builtin_name;
 
 typedef struct object
 {
     object_type type;
     literal lit;
     char* err;
-    unsigned int builtin_fn;
+    builtin_name builtin_fn;
+    object_list arr;
 } object;
 
 typedef struct env_map_entry
@@ -50,5 +66,10 @@ void cleanup_environment(environment* env);
 void force_cleanup_environment(environment* env);
 void cleanup_object(object obj);
 void cleanup_stmt_list(stmt_list st_lst);
+
+
+object_list new_object_list();
+void append_object_list(object_list* cur_list, object new_object);
+
 
 #endif

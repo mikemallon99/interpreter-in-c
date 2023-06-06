@@ -5,12 +5,11 @@
 #include <string.h>
 
 #include "eval.h"
+#include "builtins.h"
 
 #define ENV_MAP_SIZE 128
 
 object _create_null_obj();
-object _create_lit_obj(literal l);
-object _create_err_obj(const char* format, ...);
 
 bool _is_function(object obj);
 bool _is_error(object obj);
@@ -19,7 +18,7 @@ object _cast_as_bool(object l);
 unsigned long _get_hash_env(char* str);
 void _insert_env(env_map map, char* key, object val);
 object _get_env(env_map map, char* key);
-object _get_literal(environment* env, char* key);
+object _eval_identifier(environment* env, char* key);
 
 object _lit_gt(object left, object right);
 object _lit_lt(object left, object right);
@@ -387,7 +386,7 @@ object _create_null_obj()
     return null;
 }
 
-object _create_lit_obj(literal l)
+object create_lit_obj(literal l)
 {
     object obj;
     obj.type = LIT_OBJ;
@@ -395,7 +394,15 @@ object _create_lit_obj(literal l)
     return obj;
 }
 
-object _create_err_obj(const char* format, ...)
+object create_builtin_obj(builtin_name name)
+{
+    object obj;
+    obj.type = BUILTIN_OBJ;
+    obj.builtin_fn = name;
+    return obj;
+}
+
+object create_err_obj(const char* format, ...)
 {
     object obj;
     obj.type = ERR_OBJ;
@@ -442,7 +449,7 @@ object _get_env(env_map env, char* key)
     env_map_entry entry = env.entries[_get_hash_env(key)];
     if (entry.key == NULL)
     {
-        return _create_err_obj("tried to lookup identifier %s which does not exist", key);
+        return create_err_obj("tried to lookup identifier %s which does not exist", key);
     }
     else if (strcmp(entry.key, key) == 0)
     {
@@ -450,27 +457,51 @@ object _get_env(env_map env, char* key)
     }
     else
     {
-        return _create_err_obj("tried to lookup identifier %s but found collision", key);
+        return create_err_obj("tried to lookup identifier %s but found collision", key);
     }
 }
 
-object _get_literal(environment* env, char* key)
+object _lookup_builtins(char* key) 
+{
+    if (strcmp(key, "len") == 0) {
+        return create_builtin_obj(BUILTIN_LEN);
+    }
+    else {
+        return create_err_obj("Could not find builtin '%s'.", key);
+    }
+}
+
+object _get_literal_env(environment* env, char* key) 
 {
     object val;
     val = _get_env(env->inner, key);
     if (val.type == ERR_OBJ && env->outer != NULL)
     {
         cleanup_object(val);
-        return _get_literal(env->outer, key);
+        return _get_literal_env(env->outer, key);
     }
     return val;
+}
+
+object _eval_identifier(environment* env, char* key)
+{
+    object env_obj = _get_literal_env(env, key);
+    if (env_obj.type == ERR_OBJ) {
+        cleanup_object(env_obj);
+        env_obj = _lookup_builtins(key);
+        if (env_obj.type == ERR_OBJ) {
+            cleanup_object(env_obj);
+            return create_err_obj("Could not resolve identifier %s", key);
+        }
+    }
+    return env_obj;
 }
 
 object _cast_as_bool(object l)
 {
     literal bool_lit;
     bool_lit.type = BOOL_LIT;
-    object b = _create_lit_obj(bool_lit);
+    object b = create_lit_obj(bool_lit);
 
     switch (l.lit.type)
     {
@@ -495,7 +526,7 @@ object _cast_as_bool(object l)
         b.lit.data.b = false;
         break;
     default:
-        return _create_err_obj("cannot cast object as bool");
+        return create_err_obj("cannot cast object as bool");
     }
     return b;
 }
@@ -514,7 +545,7 @@ object _eval_prefix(token op, object right)
             right.lit.data.i = -right.lit.data.i;
             return right;
         }
-        return _create_err_obj("operator not supported: -");
+        return create_err_obj("operator not supported: -");
     default:
         assert(false);
     }
@@ -524,7 +555,7 @@ object _lit_gt(object left, object right)
 {
     literal bool_lit;
     bool_lit.type = BOOL_LIT;
-    object out = _create_lit_obj(bool_lit);
+    object out = create_lit_obj(bool_lit);
 
     if (left.lit.type != right.lit.type)
     {
@@ -538,7 +569,7 @@ object _lit_gt(object left, object right)
         out.lit.data.b = left.lit.data.i > right.lit.data.i;
         return out;
     default:
-        return _create_err_obj("operator not supported: >");
+        return create_err_obj("operator not supported: >");
     }
 }
 
@@ -546,7 +577,7 @@ object _lit_lt(object left, object right)
 {
     literal bool_lit;
     bool_lit.type = BOOL_LIT;
-    object out = _create_lit_obj(bool_lit);
+    object out = create_lit_obj(bool_lit);
 
     if (left.lit.type != right.lit.type)
     {
@@ -560,7 +591,7 @@ object _lit_lt(object left, object right)
         out.lit.data.b = left.lit.data.i < right.lit.data.i;
         return out;
     default:
-        return _create_err_obj("operator not supported: <");
+        return create_err_obj("operator not supported: <");
     }
 }
 
@@ -568,7 +599,7 @@ object _lit_eq(object left, object right)
 {
     literal bool_lit;
     bool_lit.type = BOOL_LIT;
-    object out = _create_lit_obj(bool_lit);
+    object out = create_lit_obj(bool_lit);
 
     if (left.lit.type != right.lit.type)
     {
@@ -582,7 +613,7 @@ object _lit_eq(object left, object right)
         out.lit.data.b = left.lit.data.i == right.lit.data.i;
         return out;
     default:
-        return _create_err_obj("operator not supported: ==");
+        return create_err_obj("operator not supported: ==");
     }
 }
 
@@ -590,7 +621,7 @@ object _lit_neq(object left, object right)
 {
     literal bool_lit;
     bool_lit.type = BOOL_LIT;
-    object out = _create_lit_obj(bool_lit);
+    object out = create_lit_obj(bool_lit);
 
     if (left.lit.type != right.lit.type)
     {
@@ -604,7 +635,7 @@ object _lit_neq(object left, object right)
         out.lit.data.b = left.lit.data.i != right.lit.data.i;
         return out;
     default:
-        return _create_err_obj("operator not supported: !=");
+        return create_err_obj("operator not supported: !=");
     }
 }
 
@@ -615,7 +646,7 @@ object _eval_infix(token op, object left, object right)
 
     if (left.lit.type != right.lit.type)
     {
-        return _create_err_obj("type mismatch: %s != %s", lit_type_string(left.lit), lit_type_string(right.lit));
+        return create_err_obj("type mismatch: %s != %s", lit_type_string(left.lit), lit_type_string(right.lit));
     }
 
     switch (op.type)
@@ -634,7 +665,7 @@ object _eval_infix(token op, object left, object right)
             sprintf(out.lit.data.s, "%s%s", left.lit.data.s, right.lit.data.s);
             return out;
         }
-        return _create_err_obj("operator not supported: %s", op.value);
+        return create_err_obj("operator not supported: %s", op.value);
     case MINUS:
         if (left.lit.type == INT_LIT)
         {
@@ -642,7 +673,7 @@ object _eval_infix(token op, object left, object right)
             out.lit.data.i = left.lit.data.i - right.lit.data.i;
             return out;
         }
-        return _create_err_obj("operator not supported: %s", op.value);
+        return create_err_obj("operator not supported: %s", op.value);
     case ASTERISK:
         if (left.lit.type == INT_LIT)
         {
@@ -650,7 +681,7 @@ object _eval_infix(token op, object left, object right)
             out.lit.data.i = left.lit.data.i*  right.lit.data.i;
             return out;
         }
-        return _create_err_obj("operator not supported: %s", op.value);
+        return create_err_obj("operator not supported: %s", op.value);
     case SLASH:
         if (left.lit.type == INT_LIT)
         {
@@ -658,7 +689,7 @@ object _eval_infix(token op, object left, object right)
             out.lit.data.i = left.lit.data.i / right.lit.data.i;
             return out;
         }
-        return _create_err_obj("operator not supported: %s", op.value);
+        return create_err_obj("operator not supported: %s", op.value);
     case GT:
         return _lit_gt(left, right);
     case LT:
@@ -668,7 +699,7 @@ object _eval_infix(token op, object left, object right)
     case NOT_EQ:
         return _lit_neq(left, right);
     default:
-        return _create_err_obj("operator not supported: %s", op.value);
+        return create_err_obj("operator not supported: %s", op.value);
     }
 }
 
@@ -685,10 +716,10 @@ object _eval_expr(expr* e, environment* env)
         // Resolve any identifier
         if (e->data.lit.type == IDENT_LIT)
         {
-            return _copy_object(_get_literal(env, e->data.lit.data.t.value));
+            return _copy_object(_eval_identifier(env, e->data.lit.data.t.value));
         }
 
-        out = _create_lit_obj(e->data.lit);
+        out = create_lit_obj(e->data.lit);
         if (e->data.lit.type == FN_LIT)
         {
             out.lit.data.fn.env = (environment*)calloc(1, sizeof(environment));
@@ -749,22 +780,39 @@ object _eval_expr(expr* e, environment* env)
         args = e->data.call.args;
         if (args.count != func.lit.data.fn.params.count)
         {
-            _create_err_obj("arg mismatch, input: %d fn: %d", args.count, func.lit.data.fn.params.count);
+            create_err_obj("arg mismatch, input: %d fn: %d", args.count, func.lit.data.fn.params.count);
         }
 
-        func.lit.data.fn.env->inner = new_env_map();
-        for (int i = 0; i < args.count; i++)
-        {
-            out = _eval_expr(args.exprs[i], env);
-            if (_is_error(out))
+        if (func.type == LIT_OBJ) {
+            func.lit.data.fn.env->inner = new_env_map();
+            for (int i = 0; i < args.count; i++)
             {
-                return out;
+                out = _eval_expr(args.exprs[i], env);
+                if (_is_error(out))
+                {
+                    return out;
+                }
+                _insert_env(func.lit.data.fn.env->inner, func.lit.data.fn.params.tokens[i].value, out);
             }
-            _insert_env(func.lit.data.fn.env->inner, func.lit.data.fn.params.tokens[i].value, out);
+            out = eval_program(&func.lit.data.fn.body, func.lit.data.fn.env);
+            cleanup_object(func);
+            return out;
         }
-        out = eval_program(&func.lit.data.fn.body, func.lit.data.fn.env);
-        cleanup_object(func);
-        return out;
+        else if (func.type == BUILTIN_OBJ) {
+            object_list resolved_args = new_object_list();
+            for (int i = 0; i < args.count; i++)
+            {
+                out = _eval_expr(args.exprs[i], env);
+                if (_is_error(out))
+                {
+                    return out;
+                }
+                append_object_list(&resolved_args, out);
+            }
+            out = call_builtin(func, resolved_args);
+            cleanup_object(func);
+            return out;
+        }
     default:
         return _create_null_obj();
     }

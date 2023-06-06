@@ -13,6 +13,7 @@ set(Headers
   src/parser/statements.h
   src/lexer/lexer.h
   src/eval/eval.h
+  src/eval/builtins.h
   src/ast/ast.h
   src/ast/expressions.h
 )
@@ -24,6 +25,7 @@ set(Sources
   src/parser/statements.c
   src/lexer/lexer.c
   src/eval/eval.c
+  src/eval/builtins.c
   src/ast/ast.c
   src/ast/expressions.c
 )

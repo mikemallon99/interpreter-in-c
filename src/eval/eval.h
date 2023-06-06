@@ -7,6 +7,7 @@
 typedef enum
 {
     LIT_OBJ,
+    BUILTIN_OBJ,
     RET_OBJ,
     ERR_OBJ
 } object_type;
@@ -16,6 +17,7 @@ typedef struct object
     object_type type;
     literal lit;
     char* err;
+    unsigned int builtin_fn;
 } object;
 
 typedef struct env_map_entry
@@ -40,6 +42,9 @@ typedef struct environment
 
 object eval_program(stmt_list* p, environment* env);
 env_map new_env_map();
+
+object create_err_obj(const char* format, ...);
+object create_lit_obj(literal l);
 
 void cleanup_environment(environment* env);
 void force_cleanup_environment(environment* env);

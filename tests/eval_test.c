@@ -269,6 +269,19 @@ bool test_eval_string()
     assert_prog_output(input_str_2, exp_val_2);
 }
 
+bool test_eval_builtin()
+{
+    char input_str[] =
+        "let s = \"test string!!\";"
+        "let s_length = len(s);"
+        "s_length";
+
+    literal exp_val;
+    exp_val.type = INT_LIT;
+    exp_val.data.i = 13;
+    assert_prog_output(input_str, exp_val);
+}
+
 void run_all_eval_tests()
 {
     test_eval_int();
@@ -282,6 +295,7 @@ void run_all_eval_tests()
     test_eval_fn_2();
     test_eval_fn_rec();
     test_eval_string();
+    test_eval_builtin();
 }
 
 #endif

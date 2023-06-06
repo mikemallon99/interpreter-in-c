@@ -689,7 +689,7 @@ object _eval_infix(token op, object left, object right)
     object out;
     out.type = LIT_OBJ;
 
-    if (left.lit.type != right.lit.type)
+    if (left.lit.type == INT_LIT && left.lit.type != right.lit.type)
     {
         return create_err_obj("type mismatch: %s != %s", lit_type_string(left.lit), lit_type_string(right.lit));
     }

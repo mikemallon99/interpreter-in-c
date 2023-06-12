@@ -189,14 +189,17 @@ expr* _parse_infix(parser* p, expr* left)
 
     _next_parser_token(p);
 
-    inf.right = _parse_expression(p, get_precedence(inf.op));
-    
-    // Array index infix will have a ] at the end
     if (inf.op.type == LBRACKET) {
+        // Need to be able to parse expressions inside of brackets
+        inf.right = _parse_expression(p, LOWEST_PR);
+        // Array index infix will have a ] at the end
         if (!_expect_peek(p, RBRACKET))
         {
             return NULL;
         }
+    }
+    else {
+        inf.right = _parse_expression(p, get_precedence(inf.op));
     }
 
     ex->data.inf = inf;

@@ -302,6 +302,15 @@ bool test_eval_array()
     exp_val_2.type = INT_LIT;
     exp_val_2.data.i = 10;
     assert_prog_output(input_str_2, exp_val_2);
+
+    char input_str_3[] =
+        "let arr = [1, 2, 3];"
+        "arr[2-1]";
+
+    literal exp_val_3;
+    exp_val_3.type = INT_LIT;
+    exp_val_3.data.i = 2;
+    assert_prog_output(input_str_3, exp_val_3);
 }
 
 void run_all_eval_tests()

@@ -128,6 +128,19 @@ char* get_token_type_string(token_type t)
     case RETURN:
         strcpy(token_string, "RETURN");
         break;
+    case LBRACKET:
+        strcpy(token_string, "LBRACKET");
+        break;
+    case RBRACKET:
+        strcpy(token_string, "RBRACKET");
+        break;
+    case STRING:
+        strcpy(token_string, "STRING");
+        break;
+    case DB_QUOTE:
+        strcpy(token_string, "DB_QUOTE");
+        break;
     }
+
     return token_string;
 }

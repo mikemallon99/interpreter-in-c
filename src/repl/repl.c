@@ -34,14 +34,8 @@ void start()
         p = new_parser(&l);
         prog = parse_program(&p);
         out = eval_program(&prog, &env);
-        if (out.type == ERR_OBJ)
-        {
-            printf("%s\n", out.err);
-        }
-        else
-        {
-            printf("%s\n", literal_string(out.lit));
-        }
+        char* out_string = object_string(out);
+        printf("%s\n", out_string);
         cleanup_object(out);
     }
 

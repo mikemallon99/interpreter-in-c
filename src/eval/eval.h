@@ -67,9 +67,11 @@ void force_cleanup_environment(environment* env);
 void cleanup_object(object obj);
 void cleanup_stmt_list(stmt_list st_lst);
 
+char* object_string(object obj);
 
 object_list new_object_list();
 void append_object_list(object_list* cur_list, object new_object);
+char* object_list_string(object_list* cur_list);
 
 
 #endif

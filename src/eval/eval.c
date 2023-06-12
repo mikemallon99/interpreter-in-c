@@ -103,6 +103,55 @@ void append_object_list(object_list* cur_list, object new_object)
 }
 
 
+char* object_string(object obj)
+{
+    char* obj_str = (char*)calloc(256, 1);
+    char* temp_str;
+
+    switch(obj.type) {
+        case ERR_OBJ:
+            strcpy(obj_str, obj.err);
+            break;
+        case ARRAY_OBJ:
+            temp_str = object_list_string(&obj.arr);
+            strcpy(obj_str, temp_str);
+            free(temp_str);
+            break;
+        case LIT_OBJ:
+            temp_str = literal_string(obj.lit);
+            strcpy(obj_str, temp_str);
+            free(temp_str);
+            break;
+        default:
+            strcpy(obj_str, "Error creating object string.");
+            break;
+    }
+
+    return obj_str;
+}
+
+
+char* object_list_string(object_list* cur_list) 
+{
+    char* cur_lit_str; 
+    char* list_string = (char*)calloc(256, 1);
+
+    strcpy(list_string, "[");
+    for (int i = 0; i < cur_list->count; i++) {
+        cur_lit_str = object_string(cur_list->objs[i]);
+        if (i == cur_list->count - 1) {
+            sprintf(list_string, "%s%s]", list_string, cur_lit_str);
+        }
+        else {
+            sprintf(list_string, "%s%s, ", list_string, cur_lit_str);
+        }
+        free(cur_lit_str);
+    }
+
+    return list_string;
+}
+
+
 // PRIVATE FUNCTIONS
 
 void _cleanup_token(token tok) {

@@ -67,7 +67,6 @@ stmt_list parse_program(parser* p)
         // Just make the program contintue with the next statement
         if (cur_stmt.type == NULL_STMT)
         {
-            _error_string(p, "Block statement with no body.");
             return prog;
         }
         append_stmt_list(&prog, cur_stmt);
@@ -87,7 +86,7 @@ void _peek_error(parser* p, token_type cur_type)
     char* actual_token_str = get_token_type_string(p->peek_token.type);
 
     sprintf(p->errors[p->num_errors], "Expected next token to be %s but got %s instead.", exp_token_str, actual_token_str);
-    printf("ERROR: Expected next token to be %s but got %s instead.\n", exp_token_str, actual_token_str);
+    // printf("ERROR: Expected next token to be %s but got %s instead.\n", exp_token_str, actual_token_str);
 
     free(exp_token_str);
     free(actual_token_str);
@@ -97,7 +96,6 @@ void _peek_error(parser* p, token_type cur_type)
 void _error_string(parser* p, char* err_str)
 {
     strcpy(p->errors[p->num_errors], err_str);
-    printf(err_str);
     p->num_errors++;
 }
 
@@ -182,6 +180,10 @@ expr* _parse_prefix(parser* p)
     _next_parser_token(p);
 
     pre.right = _parse_expression(p, PREFIX_PR);
+    if (pre.right == NULL) {
+        _error_string(p, "Prefix has invalid right expression.");
+        return NULL;
+    }
 
     ex->data.pre = pre;
     return ex;
@@ -202,6 +204,10 @@ expr* _parse_infix(parser* p, expr* left)
     if (inf.op.type == LBRACKET) {
         // Need to be able to parse expressions inside of brackets
         inf.right = _parse_expression(p, LOWEST_PR);
+        if (inf.right == NULL) {
+            _error_string(p, "Infix has invalid right expression.");
+            return NULL;
+        }
         // Array index infix will have a ] at the end
         if (!_expect_peek(p, RBRACKET))
         {
@@ -210,6 +216,10 @@ expr* _parse_infix(parser* p, expr* left)
     }
     else {
         inf.right = _parse_expression(p, get_precedence(inf.op));
+        if (inf.right == NULL) {
+            _error_string(p, "Infix has invalid right expression.");
+            return NULL;
+        }
     }
 
     ex->data.inf = inf;
@@ -221,6 +231,10 @@ expr* _parse_group(parser* p)
     _next_parser_token(p);
 
     expr* ex = _parse_expression(p, LOWEST_PR);
+    if (ex == NULL) {
+        _error_string(p, "Group contains invalid expression.");
+        return NULL;
+    }
 
     if (!_expect_peek(p, RPAREN))
     {
@@ -236,14 +250,14 @@ stmt_list _parse_block_stmt(parser* p)
     stmt cur_stmt;
 
     // Need to do first iteration so we have our "prev_stmt" initialized
-    for (token t = p->cur_token; t.type != RBRACE; t = p->cur_token)
+    while (p->cur_token.type != RBRACE)
     {
         cur_stmt = _parse_statement(p);
         // Just make the program contintue with the next statement
         if (cur_stmt.type == NULL_STMT)
         {
-            _next_parser_token(p);
-            continue;
+            _expect_peek(p, RBRACE);
+            return block;
         }
         append_stmt_list(&block, cur_stmt);
 
@@ -268,6 +282,10 @@ expr* _parse_if(parser* p)
     _next_parser_token(p);
 
     if_data.condition = _parse_expression(p, LOWEST_PR);
+    if (if_data.condition == NULL) {
+        _error_string(p, "If condition contains invalid expression.");
+        return NULL;
+    }
 
     if (!_expect_peek(p, RPAREN))
     {
@@ -353,7 +371,12 @@ expr_list _parse_call_args(parser* p)
     while (true)
     {
         _next_parser_token(p);
-        append_expr_list(&params, _parse_expression(p, LOWEST_PR));
+        expr* new_expr = _parse_expression(p, LOWEST_PR);
+        if (new_expr == NULL) {
+            _error_string(p, "Call arguments contains invalid expression.");
+            return params;
+        }
+        append_expr_list(&params, new_expr);
 
         if (_peek_token_is(p, COMMA))
         {
@@ -427,7 +450,12 @@ expr* _parse_array(parser* p) {
     while (true)
     {
         _next_parser_token(p);
-        append_expr_list(&ex->data.lit.data.arr, _parse_expression(p, LOWEST_PR));
+        expr* new_expr = _parse_expression(p, LOWEST_PR);
+        if (new_expr == NULL) {
+            _error_string(p, "Array member is an invalid expression.");
+            return NULL;
+        }
+        append_expr_list(&ex->data.lit.data.arr, new_expr);
 
         if (_peek_token_is(p, COMMA))
         {
@@ -435,8 +463,7 @@ expr* _parse_array(parser* p) {
         }
         else if (!_expect_peek(p, RBRACKET))
         {
-            // THIS SHOULD BE AN ERROR
-            return ex;
+            return NULL;
         }
         else {
             return ex;
@@ -462,15 +489,23 @@ expr* _parse_map(parser* p) {
 
         expr_pair new_pair;
         new_pair.first = _parse_expression(p, LOWEST_PR);
+        if (new_pair.first == NULL) {
+            _error_string(p, "Map key is an invalid expression.");
+            return NULL;
+        }
 
         if (!_expect_peek(p, COLON))
         {
-            return ex;
+            return NULL;
         }
 
         _next_parser_token(p);
 
         new_pair.second = _parse_expression(p, LOWEST_PR);
+        if (new_pair.second == NULL) {
+            _error_string(p, "Map value is an invalid expression.");
+            return NULL;
+        }
 
         append_expr_pair_list(&ex->data.lit.data.map, new_pair);
 
@@ -480,8 +515,7 @@ expr* _parse_map(parser* p) {
         }
         else if (!_expect_peek(p, RBRACE))
         {
-            // THIS SHOULD BE AN ERROR
-            return ex;
+            return NULL;
         }
         else {
             return ex;
@@ -526,6 +560,11 @@ expr* _parse_expression(parser* p, precedence prec)
             break;
         default:
             left_expr = NULL;
+            _error_string(p, "Did not find expression function for token.");
+    }
+
+    if (left_expr == NULL) {
+        return left_expr;
     }
 
     while (!_peek_token_is(p, SEMICOLON) && prec < _peek_precedence(p))
@@ -567,6 +606,10 @@ stmt _parse_let_statement(parser* p)
     _next_parser_token(p);
 
     let.value = _parse_expression(p, LOWEST_PR);
+    if (let.value == NULL) {
+        _error_string(p, "Let statement assigns to invalid expression.");
+        return new_stmt;
+    }
 
     if (_peek_token_is(p, SEMICOLON))
     {
@@ -587,6 +630,10 @@ stmt _parse_return_statement(parser* p)
     _next_parser_token(p);
 
     ret.value = _parse_expression(p, LOWEST_PR);
+    if (ret.value == NULL) {
+        _error_string(p, "Return statement returns invalid expression.");
+        return new_stmt;
+    }
 
     if (_peek_token_is(p, SEMICOLON))
     {
@@ -605,6 +652,10 @@ stmt _parse_expr_stmt(parser* p)
     new_stmt.type = NULL_STMT;
 
     ex.value = _parse_expression(p, LOWEST_PR);
+    if (ex.value == NULL) {
+        _error_string(p, "Expression statement has invalid expression.");
+        return new_stmt;
+    }
 
     if (_peek_token_is(p, SEMICOLON))
     {
@@ -629,7 +680,7 @@ stmt _parse_statement(parser* p)
     }
 }
 
-void _next_parser_token(parser* p)
+void _next_parser_token(parser *p)
 {
     p->cur_token = p->peek_token;
     p->peek_token = next_lexer_token(p->l);

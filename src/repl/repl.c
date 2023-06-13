@@ -33,6 +33,10 @@ void start()
         l = get_lexer(input);
         p = new_parser(&l);
         prog = parse_program(&p);
+        if (!check_parser_errors(&p)) {
+            continue;
+        }
+
         out = eval_program(&prog, &env);
         char* out_string = object_string(out);
         printf("%s\n", out_string);

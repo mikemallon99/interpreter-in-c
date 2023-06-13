@@ -61,6 +61,7 @@ void append_stmt_list(stmt_list* cur_list, stmt new_stmt)
 char* program_string(stmt_list* p)
 {
     char* stmt_str = malloc(2048);
+    strcpy(stmt_str, "");
     char* cur_str;
     int str_pos = 0;
 

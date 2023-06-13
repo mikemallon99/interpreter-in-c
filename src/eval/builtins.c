@@ -162,7 +162,7 @@ object _builtin_print(object_list args)
 
     object input_obj = args.objs[0];
     char* obj_str = object_string(input_obj);
-    printf(obj_str);
+    printf("%s\n", obj_str);
 
     return create_null_obj();
 }

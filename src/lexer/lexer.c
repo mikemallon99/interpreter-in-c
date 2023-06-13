@@ -218,7 +218,7 @@ char* _read_int(lexer* l)
 
 void _skip_whitespace(lexer* l)
 {
-    while (l->cur_byte == ' ' || l->cur_byte == '\n')
+    while (l->cur_byte == ' ' || l->cur_byte == '\n' || l->cur_byte == '\r' || l->cur_byte == '\t')
     {
         _read_char(l);
     }

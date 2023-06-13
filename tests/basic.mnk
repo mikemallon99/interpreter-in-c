@@ -1,0 +1,41 @@
+let map = fn(arr, f) {
+  let iter = fn(arr, accumulated) {
+    if (len(arr) == 0) {
+      accumulated
+    } else {
+      iter(rest(arr), push(accumulated, f(first(arr))));
+    }
+  };
+
+  iter(arr, []);
+};
+
+let reduce = fn(arr, initial, f) {
+  let iter = fn(arr, result) {
+    if (len(arr) == 0) {
+      result
+    } else {
+      iter(rest(arr), f(result, first(arr)));
+    }
+  };
+
+  iter(arr, initial);
+};
+
+let input = ["one", "two", "three", "four"];
+print(input);
+let int_map = {"one": 1, "two": 2, "three": 3, "four": 4};
+print(int_map);
+
+let get_int = fn(in_str, in_map) {
+    in_map[in_str];
+};
+
+let int_list = map(input, fn(x) {get_int(x, int_map)});
+print(int_list);
+
+let list_times_thousand = map(int_list, fn(x) {x * 1000});
+print(list_times_thousand);
+
+let sum_list = reduce(list_times_thousand, 0, fn(r, x) {r + x});
+print(sum_list);

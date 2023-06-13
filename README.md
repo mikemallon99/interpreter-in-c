@@ -13,10 +13,10 @@ monkey.exe will start a REPL if there are no arguments, and will run a program f
 
 # Language
 
-The language supports the following datatypes: int, bool, string, array, map, function
-It supports if/else statements, function calls, array and map indexing, builtin functions, let statements, and return statements.
-Has builtin functions: len, first, last, rest, push, print
-
+The language supports the following datatypes: int, bool, string, array, map, function.  
+It supports if/else statements, function calls, array and map indexing, builtin functions, let statements, and return statements.  
+Also has builtin functions: len, first, last, rest, push, print.  
+  
 Here's an example program that does a good job of showing off all the features of the language. It contains a monkey implementation of map/reduce and uses these functions to convert strings to ints, multiply an array by 1000, calculate the sum of the array, and then print a string based on the result.
 
 ```

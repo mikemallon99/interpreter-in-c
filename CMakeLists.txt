@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(IntepreterInC)
 
-set(This IntepreterInC)
+set(This monkey)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)

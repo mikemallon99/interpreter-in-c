@@ -22,20 +22,28 @@ let reduce = fn(arr, initial, f) {
   iter(arr, initial);
 };
 
-let input = ["one", "two", "three", "four"];
-print(input);
-let int_map = {"one": 1, "two": 2, "three": 3, "four": 4};
-print(int_map);
+let str_list = ["one", "two", "three", "four"];
+let str_to_int_map = {"one": 1, "two": 2, "three": 3, "four": 4};
 
-let get_int = fn(in_str, in_map) {
-    return in_map[in_str];
+let get_int = fn(in_str) {
+    return str_to_int_map[in_str];
 };
 
-let int_list = map(input, fn(x) {get_int(x, int_map)});
-print(int_list);
+let int_list = map(str_list, fn(x) {get_int(x)});
 
 let list_times_thousand = map(int_list, fn(x) {x * 1000});
 print(list_times_thousand);
 
 let sum_list = reduce(list_times_thousand, 0, fn(r, x) {r + x});
-print(sum_list);
+
+if (sum_list > 9999) {
+    print("This number is massive");
+}
+else {
+    if (sum_list > 1000) {
+        print("This number is decent.");
+    }
+    else {
+        print("This number is small.");
+    }
+}

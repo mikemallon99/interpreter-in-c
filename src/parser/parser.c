@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "parser.h"
 
 void _peek_error(parser* p, token_type cur_type);
+void _error_string(parser* p, char* err_str);
 bool _cur_token_is(parser* p, token_type cur_type);
 bool _peek_token_is(parser* p, token_type peek_type);
 precedence _peek_precedence(parser* p);
@@ -64,8 +66,8 @@ stmt_list parse_program(parser* p)
         // Just make the program contintue with the next statement
         if (cur_stmt.type == NULL_STMT)
         {
-            _next_parser_token(p);
-            continue;
+            _error_string(p, "Block statement with no body.");
+            return prog;
         }
         append_stmt_list(&prog, cur_stmt);
 
@@ -88,6 +90,13 @@ void _peek_error(parser* p, token_type cur_type)
 
     free(exp_token_str);
     free(actual_token_str);
+    p->num_errors++;
+}
+
+void _error_string(parser* p, char* err_str)
+{
+    strcpy(p->errors[p->num_errors], err_str);
+    printf(err_str);
     p->num_errors++;
 }
 
@@ -559,12 +568,12 @@ stmt _parse_statement(parser* p)
 {
     switch (p->cur_token.type)
     {
-    case LET:
-        return _parse_let_statement(p);
-    case RETURN:
-        return _parse_return_statement(p);
-    default:
-        return _parse_expr_stmt(p);
+        case LET:
+            return _parse_let_statement(p);
+        case RETURN:
+            return _parse_return_statement(p);
+        default:
+            return _parse_expr_stmt(p);
     }
 }
 

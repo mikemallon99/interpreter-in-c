@@ -355,6 +355,15 @@ bool test_eval_array()
         "map(a, double);";
     int arr_5[] = {2, 4, 6, 8};
     assert_prog_output(input_str_11, create_array_obj(arr_5, 4));
+
+    // THIS BREAKS THE PARSER
+    // char input_str_11[] = 
+    //     "let map = fn(arr, f) { let iter = fn(arr, accumulated) { if (len(arr) == 0) { accumulated } else { iter(rest(arr), push(accumulated, f(first(arr)))); }  iter(arr, []); };"
+    //     "let a = [1, 2, 3, 4];"
+    //     "let double = fn(x) { x * 2 };"
+    //     "map(a, double);";
+    // int arr_5[] = {2, 4, 6, 8};
+    // assert_prog_output(input_str_11, create_array_obj(arr_5, 4));
 }
 
 

@@ -24,7 +24,11 @@ typedef struct object_list
 
 typedef enum
 {
-    BUILTIN_LEN
+    BUILTIN_LEN,
+    BUILTIN_FIRST,
+    BUILTIN_LAST,
+    BUILTIN_REST,
+    BUILTIN_PUSH
 } builtin_name;
 
 typedef struct object
@@ -64,6 +68,7 @@ object create_lit_obj(literal l);
 
 void cleanup_environment(environment* env);
 void force_cleanup_environment(environment* env);
+object copy_object(object obj);
 void cleanup_object(object obj);
 void cleanup_stmt_list(stmt_list st_lst);
 

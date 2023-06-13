@@ -9,7 +9,7 @@
 
 void start()
 {
-    char input[100];
+    char input[1024];
     lexer l;
     parser p;
     stmt_list prog;
@@ -23,7 +23,7 @@ void start()
     while (true)
     {
         printf(">> ");
-        fgets(input, 100, stdin);
+        fgets(input, 1024, stdin);
 
         if (strcmp(input, "") == 0)
         {

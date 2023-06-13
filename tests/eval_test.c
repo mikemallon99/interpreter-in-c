@@ -24,7 +24,104 @@ object get_prog_output(char* input_str)
     return out;
 }
 
-bool assert_prog_output(char* input_str, literal exp_val)
+object create_int_obj(int i)
+{
+    literal lit;
+    lit.type = INT_LIT;
+    lit.data.i = i;
+
+    object new_obj;
+    new_obj.type = LIT_OBJ;
+    new_obj.lit = lit;
+
+    return new_obj;
+}
+
+object create_array_obj(int arr[], int size)
+{
+    object new_obj;
+    new_obj.type = ARRAY_OBJ;
+    new_obj.arr = new_object_list();
+    for (int i = 0; i < size; i++) {
+        append_object_list(&new_obj.arr, create_int_obj(arr[i]));
+    }
+
+    return new_obj;
+}
+
+object create_bool_obj(bool b)
+{
+    literal lit;
+    lit.type = BOOL_LIT;
+    lit.data.b = b;
+
+    object new_obj;
+    new_obj.type = LIT_OBJ;
+    new_obj.lit = lit;
+
+    return new_obj;
+}
+
+object create_null_obj()
+{
+    literal lit;
+    lit.type = NULL_LIT;
+
+    object new_obj;
+    new_obj.type = LIT_OBJ;
+    new_obj.lit = lit;
+
+    return new_obj;
+}
+
+object create_str_obj(char* str)
+{
+    literal lit;
+    lit.type = STRING_LIT;
+    lit.data.s = str;
+
+    object new_obj;
+    new_obj.type = LIT_OBJ;
+    new_obj.lit = lit;
+
+    return new_obj;
+}
+
+void assert_lit_equal(literal lit1, literal lit2)
+{
+    assert(lit1.type == lit2.type);
+    switch (lit1.type)
+    {
+        case INT_LIT:
+            assert(lit1.data.i == lit2.data.i);
+            break;
+        case BOOL_LIT:
+            assert(lit1.data.b == lit2.data.b);
+            break;
+        case STRING_LIT:
+            assert(strcmp(lit1.data.s, lit2.data.s) == 0);
+            break;
+        case NULL_LIT:
+            break;
+        default:
+            assert(false);
+    }
+}
+
+void assert_obj_equal(object obj1, object obj2)
+{
+    assert(obj1.type == obj2.type);
+    if (obj1.type == LIT_OBJ) {
+        assert_lit_equal(obj1.lit, obj2.lit);
+    }
+    else if (obj1.type == ARRAY_OBJ) {
+        for (int i = 0; i < obj1.arr.count; i++) {
+            assert_obj_equal(obj1.arr.objs[i], obj2.arr.objs[i]);
+        }
+    }
+}
+
+bool assert_prog_output(char* input_str, object exp_val)
 {
     lexer l = get_lexer(input_str);
     parser p = new_parser(&l);
@@ -35,27 +132,11 @@ bool assert_prog_output(char* input_str, literal exp_val)
     env.outer = NULL;
     object out = eval_program(&prog, &env);
 
-    char* out_str = literal_string(out.lit);
+    char* out_str = object_string(out);
     printf("%s: %s\n", input_str, out_str);
     free(out_str);
 
-    assert(out.lit.type == exp_val.type);
-    switch (out.lit.type)
-    {
-    case INT_LIT:
-        assert(out.lit.data.i == exp_val.data.i);
-        break;
-    case BOOL_LIT:
-        assert(out.lit.data.b == exp_val.data.b);
-        break;
-    case STRING_LIT:
-        assert(strcmp(out.lit.data.s, exp_val.data.s) == 0);
-        break;
-    case NULL_LIT:
-        break;
-    default:
-        assert(false);
-    }
+    assert_obj_equal(out, exp_val);
 
     cleanup_stmt_list(prog);
     force_cleanup_environment(&env);
@@ -64,86 +145,39 @@ bool assert_prog_output(char* input_str, literal exp_val)
 
 bool test_eval_int()
 {
-    literal exp_val;
-    exp_val.type = INT_LIT;
-    exp_val.data.i = 5;
-    assert_prog_output("5;", exp_val);
+    assert_prog_output("5;", create_int_obj(5));
 }
 
 bool test_eval_let()
 {
-    literal exp_val;
-    exp_val.type = INT_LIT;
-    exp_val.data.i = 5;
-    assert_prog_output("let five = 5; five;", exp_val);
+    assert_prog_output("let five = 5; five;", create_int_obj(5));
 }
 
 bool test_eval_prefix()
 {
-    literal exp_val;
-
-    // EVAL BANGS
-    exp_val.type = BOOL_LIT;
-    exp_val.data.b = false;
-    assert_prog_output("!5;", exp_val);
-
-    exp_val.type = BOOL_LIT;
-    exp_val.data.b = true;
-    assert_prog_output("!!5;", exp_val);
-
-    exp_val.type = BOOL_LIT;
-    exp_val.data.b = true;
-    assert_prog_output("!false;", exp_val);
-
-    // EVAL MINUS
-    exp_val.type = INT_LIT;
-    exp_val.data.i = -5;
-    assert_prog_output("-5;", exp_val);
+    assert_prog_output("!5;", create_bool_obj(false));
+    assert_prog_output("!!5;", create_bool_obj(true));
+    assert_prog_output("!false;", create_bool_obj(true));
+    assert_prog_output("-5;", create_int_obj(-5));
 }
 
 bool test_eval_infix()
 {
-    literal exp_val;
-
-    exp_val.type = INT_LIT;
-    exp_val.data.i = 35;
-    assert_prog_output("5*  5 + 10;", exp_val);
-
-    exp_val.type = INT_LIT;
-    exp_val.data.i = 75;
-    assert_prog_output("5*  (5 + 10);", exp_val);
-
-    exp_val.type = INT_LIT;
-    exp_val.data.i = 20;
-    assert_prog_output("(100 / 2 + 10) / 3;", exp_val);
-
-    exp_val.type = INT_LIT;
-    exp_val.data.i = -5;
-    assert_prog_output("-10 + 25 - 20;", exp_val);
+    assert_prog_output("5*  5 + 10;", create_int_obj(35));
+    assert_prog_output("5*  (5 + 10);", create_int_obj(75));
+    assert_prog_output("(100 / 2 + 10) / 3;", create_int_obj(20));
+    assert_prog_output("-10 + 25 - 20;", create_int_obj(-5));
 }
 
 bool test_eval_ifelse()
 {
-    literal exp_val;
-
-    exp_val.type = INT_LIT;
-    exp_val.data.i = 10;
-    assert_prog_output("if (5 == 5) { 10 } else { -10 };", exp_val);
-
-    exp_val.type = INT_LIT;
-    exp_val.data.i = -10;
-    assert_prog_output("if (5 != 5) { 10 } else { -10 };", exp_val);
-
-    exp_val.type = NULL_LIT;
-    assert_prog_output("if (5 != 5) { 10 };", exp_val);
+    assert_prog_output("if (5 == 5) { 10 } else { -10 };", create_int_obj(10));
+    assert_prog_output("if (5 != 5) { 10 } else { -10 };", create_int_obj(-10));
+    assert_prog_output("if (5 != 5) { 10 };", create_null_obj());
 }
 
 bool test_eval_return()
 {
-    literal exp_val;
-
-    exp_val.type = INT_LIT;
-    exp_val.data.i = 10;
     char input_str[] =
         "if (10 > 1) {"
         "    if (10 > 1) {"
@@ -151,7 +185,9 @@ bool test_eval_return()
         "    }"
         "    return 1;"
         "}";
-    assert_prog_output(input_str, exp_val);
+    object obj = create_int_obj(10);
+    obj.type = RET_OBJ;
+    assert_prog_output(input_str, obj);
 }
 
 bool test_eval_error()
@@ -192,21 +228,13 @@ bool test_eval_fn()
     char input_str_1[] =
         "let basic_fn = fn(x){ x + 2 };"
         "basic_fn(2);";
-
-    literal exp_val_1;
-    exp_val_1.type = INT_LIT;
-    exp_val_1.data.i = 4;
-    assert_prog_output(input_str_1, exp_val_1);
+    assert_prog_output(input_str_1, create_int_obj(4));
 
     char input_str_2[] =
         "let closure_fn = fn(x){ fn(y) {x + y}};"
         "let add_2 = closure_fn(2);"
         "add_2(4);";
-
-    literal exp_val_2;
-    exp_val_2.type = INT_LIT;
-    exp_val_2.data.i = 6;
-    assert_prog_output(input_str_2, exp_val_2);
+    assert_prog_output(input_str_2, create_int_obj(6));
 }
 
 bool test_eval_fn_2()
@@ -216,22 +244,14 @@ bool test_eval_fn_2()
         "let add_2 = closure_fn(2);"
         "let add_3 = closure_fn(3);"
         "add_2(4) + add_3(3);";
-    literal exp_val;
-
-    exp_val.type = INT_LIT;
-    exp_val.data.i = 6 + 6;
-    assert_prog_output(input_str, exp_val);
+    assert_prog_output(input_str, create_int_obj(12));
 
     char input_str_2[] =
         "let closure_fn = fn(x){ fn(y) {x + y}};"
         "let add_2 = closure_fn(2);"
         "let add_3 = closure_fn(3);"
         "add_2(4) + add_3(3);";
-    literal exp_val_2;
-
-    exp_val_2.type = INT_LIT;
-    exp_val_2.data.i = 6 + 6;
-    assert_prog_output(input_str_2, exp_val_2);
+    assert_prog_output(input_str_2, create_int_obj(12));
 }
 
 bool test_eval_fn_rec()
@@ -239,11 +259,9 @@ bool test_eval_fn_rec()
     char input_str[] =
         "let factorial = fn(x){ if (x == 0) {return 1;} else {return x * factorial(x - 1);}; };"
         "factorial(3);";
-    literal exp_val;
-
-    exp_val.type = INT_LIT;
-    exp_val.data.i = 6;
-    assert_prog_output(input_str, exp_val);
+    object obj = create_int_obj(6);
+    obj.type = RET_OBJ;
+    assert_prog_output(input_str, obj);
 }
 
 bool test_eval_string()
@@ -251,22 +269,14 @@ bool test_eval_string()
     char input_str[] =
         "let s = \"test string!!\";"
         "s;";
-
-    literal exp_val;
-    exp_val.type = STRING_LIT;
-    exp_val.data.s = "test string!!";
-    assert_prog_output(input_str, exp_val);
+    assert_prog_output(input_str, create_str_obj("test string!!"));
 
     char input_str_2[] =
         "let one = \"one\";"
         "let two = \"two\";"
         "let three = \"three\";"
         "one + \" \" + two + \" \" + three;";
-
-    literal exp_val_2;
-    exp_val_2.type = STRING_LIT;
-    exp_val_2.data.s = "one two three";
-    assert_prog_output(input_str_2, exp_val_2);
+    assert_prog_output(input_str_2, create_str_obj("one two three"));
 }
 
 bool test_eval_builtin()
@@ -275,11 +285,7 @@ bool test_eval_builtin()
         "let s = \"test string!!\";"
         "let s_length = len(s);"
         "s_length";
-
-    literal exp_val;
-    exp_val.type = INT_LIT;
-    exp_val.data.i = 13;
-    assert_prog_output(input_str, exp_val);
+    assert_prog_output(input_str, create_int_obj(13));
 }
 
 bool test_eval_array()
@@ -287,31 +293,70 @@ bool test_eval_array()
     char input_str_1[] =
         "let arr = [1, 2, 3];"
         "arr[1]";
-
-    literal exp_val_1;
-    exp_val_1.type = INT_LIT;
-    exp_val_1.data.i = 2;
-    assert_prog_output(input_str_1, exp_val_1);
+    assert_prog_output(input_str_1, create_int_obj(2));
 
     char input_str_2[] =
         "let arr = [1, 1 + 1, \"333\", fn() {4}];"
         "let out = arr[0] + arr[1] + len(arr[2]) + arr[3]();"
         "out";
-
-    literal exp_val_2;
-    exp_val_2.type = INT_LIT;
-    exp_val_2.data.i = 10;
-    assert_prog_output(input_str_2, exp_val_2);
+    assert_prog_output(input_str_2, create_int_obj(10));
 
     char input_str_3[] =
         "let arr = [1, 2, 3];"
         "arr[2-1]";
+    assert_prog_output(input_str_3, create_int_obj(2));
 
-    literal exp_val_3;
-    exp_val_3.type = INT_LIT;
-    exp_val_3.data.i = 2;
-    assert_prog_output(input_str_3, exp_val_3);
+    // TEST BUILTINS
+    char input_str_4[] =
+        "let arr = [1, 2, 3];"
+        "len(arr)";
+    assert_prog_output(input_str_4, create_int_obj(3));
+
+    char input_str_5[] =
+        "let arr = [1, 2, 3];"
+        "first(arr)";
+    assert_prog_output(input_str_5, create_int_obj(1));
+
+    char input_str_6[] =
+        "let arr = [1, 2, 3];"
+        "last(arr)";
+    assert_prog_output(input_str_6, create_int_obj(3));
+
+    char input_str_7[] =
+        "let arr = [1, 2, 3, 4];"
+        "rest(arr)";
+    int arr_1[] = {2,3,4};
+    assert_prog_output(input_str_7, create_array_obj(arr_1, 3));
+
+    char input_str_8[] =
+        "let arr = [1, 2, 3, 4];"
+        "rest(rest(rest(arr)))";
+    int arr_2[] = {4};
+    assert_prog_output(input_str_8, create_array_obj(arr_2, 1));
+
+    char input_str_9[] =
+        "let a = [1, 2, 3, 4];"
+        "let b = push(a, 5);"
+        "b";
+    int arr_3[] = {1, 2, 3, 4, 5};
+    assert_prog_output(input_str_9, create_array_obj(arr_3, 5));
+
+    char input_str_10[] =
+        "let a = [1, 2, 3, 4];"
+        "let b = push(a, 5);"
+        "a";
+    int arr_4[] = {1, 2, 3, 4};
+    assert_prog_output(input_str_10, create_array_obj(arr_4, 4));
+
+    char input_str_11[] = 
+        "let map = fn(arr, f) { let iter = fn(arr, accumulated) { if (len(arr) == 0) { accumulated } else { iter(rest(arr), push(accumulated, f(first(arr)))); } } iter(arr, []); };"
+        "let a = [1, 2, 3, 4];"
+        "let double = fn(x) { x * 2 };"
+        "map(a, double);";
+    int arr_5[] = {2, 4, 6, 8};
+    assert_prog_output(input_str_11, create_array_obj(arr_5, 4));
 }
+
 
 void run_all_eval_tests()
 {

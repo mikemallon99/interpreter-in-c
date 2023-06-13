@@ -46,7 +46,6 @@ expr_list _copy_expr_list(expr_list ex_lst);
 stmt _copy_stmt(stmt st);
 stmt_list _copy_stmt_list(stmt_list st_lst);
 literal _copy_literal(literal lit);
-object _copy_object(object obj);
 env_map _copy_env_map(env_map env);
 environment* _copy_environment(environment* env);
 
@@ -362,7 +361,7 @@ void cleanup_object(object obj) {
     }
 }
 
-object _copy_object(object obj) {
+object copy_object(object obj) {
     object new_obj;
     new_obj.type = obj.type;
     if (obj.type == ERR_OBJ) {
@@ -372,6 +371,7 @@ object _copy_object(object obj) {
     else if (obj.type == BUILTIN_OBJ) {
         new_obj.builtin_fn = obj.builtin_fn;
     }
+    // TODO: need to figure out how to actually do copies
     else if (obj.type == ARRAY_OBJ) {
         new_obj.arr = obj.arr;
     }
@@ -400,7 +400,7 @@ env_map _copy_env_map(env_map env) {
         if (env.entries[i].key == NULL) {
             continue;
         }
-        _insert_env(new_env, env.entries[i].key, _copy_object(env.entries[i].value));
+        _insert_env(new_env, env.entries[i].key, copy_object(env.entries[i].value));
     }
     return new_env;
 }
@@ -544,6 +544,18 @@ object _lookup_builtins(char* key)
 {
     if (strcmp(key, "len") == 0) {
         return create_builtin_obj(BUILTIN_LEN);
+    }
+    else if (strcmp(key, "first") == 0) {
+        return create_builtin_obj(BUILTIN_FIRST);
+    }
+    else if (strcmp(key, "last") == 0) {
+        return create_builtin_obj(BUILTIN_LAST);
+    }
+    else if (strcmp(key, "rest") == 0) {
+        return create_builtin_obj(BUILTIN_REST);
+    }
+    else if (strcmp(key, "push") == 0) {
+        return create_builtin_obj(BUILTIN_PUSH);
     }
     else {
         return create_err_obj("Could not find builtin '%s'.", key);
@@ -726,7 +738,7 @@ object _index_array(object left, object right)
     if (right.type != LIT_OBJ || right.lit.type != INT_LIT) {
         return create_err_obj("Tried to index array with object other than an INT.");
     }
-    if (right.lit.data.i > left.arr.count) {
+    if (right.lit.data.i >= left.arr.count) {
         return create_err_obj("Array index is out of range.");
     }
 
@@ -823,7 +835,7 @@ object _eval_expr(expr* e, environment* env)
         // Resolve any identifier
         if (e->data.lit.type == IDENT_LIT)
         {
-            return _copy_object(_eval_identifier(env, e->data.lit.data.t.value));
+            return copy_object(_eval_identifier(env, e->data.lit.data.t.value));
         }
         else if (e->data.lit.type == ARRAY_LIT) {
             return _eval_array(env, e->data.lit.data.arr);

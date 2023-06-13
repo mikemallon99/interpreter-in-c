@@ -1,4 +1,4 @@
 *.exe
 .vscode
-book/*
+book_clone/*
 build/*

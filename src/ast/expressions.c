@@ -134,7 +134,7 @@ char* literal_string(literal lit)
         sprintf(lit_str, "%s", lit.data.b ? "true" : "false");
         break;
     case STRING_LIT:
-        sprintf(lit_str, "%s", lit.data.s);
+        sprintf(lit_str, "\"%s\"", lit.data.s);
         break;
     case FN_LIT:
         str1 = token_list_string(&lit.data.fn.params);

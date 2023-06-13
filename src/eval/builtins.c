@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdio.h>
 
 #include "builtins.h"
 
@@ -9,6 +10,7 @@ object _builtin_first(object_list args);
 object _builtin_last(object_list args);
 object _builtin_rest(object_list args);
 object _builtin_push(object_list args);
+object _builtin_print(object_list args);
 
 object call_builtin(object builtin_fn, object_list args) 
 {
@@ -23,6 +25,8 @@ object call_builtin(object builtin_fn, object_list args)
             return _builtin_rest(args);
         case BUILTIN_PUSH:
             return _builtin_push(args);
+        case BUILTIN_PRINT:
+            return _builtin_print(args);
         default:
             return create_err_obj("Cannot find builtin function.");
     }
@@ -148,4 +152,17 @@ object _builtin_push(object_list args)
     append_object_list(&out_arr.arr, copy_object(push_obj));
 
     return out_arr;
+}
+
+object _builtin_print(object_list args) 
+{
+    if (args.count > 1) {
+        return create_err_obj("print(): too many args");
+    }
+
+    object input_obj = args.objs[0];
+    char* obj_str = object_string(input_obj);
+    printf(obj_str);
+
+    return create_null_obj();
 }

@@ -62,18 +62,6 @@ object create_bool_obj(bool b)
     return new_obj;
 }
 
-object create_null_obj()
-{
-    literal lit;
-    lit.type = NULL_LIT;
-
-    object new_obj;
-    new_obj.type = LIT_OBJ;
-    new_obj.lit = lit;
-
-    return new_obj;
-}
-
 object create_str_obj(char* str)
 {
     literal lit;

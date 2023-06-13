@@ -9,8 +9,6 @@
 
 #define ENV_MAP_SIZE 128
 
-object _create_null_obj();
-
 bool _is_function(object obj);
 bool _is_error(object obj);
 object _cast_as_bool(object l);
@@ -227,10 +225,18 @@ char* object_string(object obj)
             strcpy(obj_str, temp_str);
             free(temp_str);
             break;
+        case MAP_OBJ:
+            temp_str = object_map_string(obj.map);
+            strcpy(obj_str, temp_str);
+            free(temp_str);
+            break;
         case LIT_OBJ:
             temp_str = literal_string(obj.lit);
             strcpy(obj_str, temp_str);
             free(temp_str);
+            break;
+        case NULL_OBJ:
+            strcpy(obj_str, "null");
             break;
         default:
             strcpy(obj_str, "Error creating object string.");
@@ -259,6 +265,37 @@ char* object_list_string(object_list* cur_list)
     }
 
     return list_string;
+}
+
+
+char* object_map_string(object_map map) 
+{
+    char* key_str; 
+    char* val_str; 
+    char* map_string = (char*)calloc(256, 1);
+
+    int num_found = 0;
+    strcpy(map_string, "{");
+    for (int i = 0; i < OBJ_MAP_CAPACITY; i++) {
+        if (map.entries[i].key.type == NULL_OBJ) {
+            continue;
+        }
+        key_str = object_string(map.entries[i].key);
+        val_str = object_string(map.entries[i].val);
+        if (num_found == 0) {
+            sprintf(map_string, "%s%s: %s", map_string, key_str, val_str);
+        }
+        else {
+            sprintf(map_string, "%s, %s: %s", map_string, key_str, val_str);
+        }
+        free(key_str);
+        free(val_str);
+
+        num_found++;
+    }
+    sprintf(map_string, "%s}", map_string);
+
+    return map_string;
 }
 
 
@@ -577,7 +614,7 @@ void _increment_env_refs(environment* env) {
     env->inner.ref_count += 1;
 }
 
-object _create_null_obj()
+object create_null_obj()
 {
     object null;
     null.type = LIT_OBJ;
@@ -692,6 +729,9 @@ object _lookup_builtins(char* key)
     }
     else if (strcmp(key, "push") == 0) {
         return create_builtin_obj(BUILTIN_PUSH);
+    }
+    else if (strcmp(key, "print") == 0) {
+        return create_builtin_obj(BUILTIN_PRINT);
     }
     else {
         return create_err_obj("Could not find builtin '%s'.", key);
@@ -1056,7 +1096,7 @@ object _eval_expr(expr* e, environment* env)
         }
         else
         {
-            return _create_null_obj();
+            return create_null_obj();
         }
     case CALL_EXPR:
         // Copy of function with incremented environment
@@ -1103,7 +1143,7 @@ object _eval_expr(expr* e, environment* env)
             return out;
         }
     default:
-        return _create_null_obj();
+        return create_null_obj();
     }
 }
 
@@ -1132,8 +1172,8 @@ object _eval_stmt(stmt* s, environment* env)
             return out;
         }
         _insert_env(env->inner, s->data.let.identifier.value, out);
-        return _create_null_obj();
+        return create_null_obj();
     default:
-        return _create_null_obj();
+        return create_null_obj();
     }
 }

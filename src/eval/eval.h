@@ -39,7 +39,8 @@ typedef enum
     BUILTIN_FIRST,
     BUILTIN_LAST,
     BUILTIN_REST,
-    BUILTIN_PUSH
+    BUILTIN_PUSH,
+    BUILTIN_PRINT
 } builtin_name;
 
 typedef struct object
@@ -82,6 +83,7 @@ object eval_program(stmt_list* p, environment* env);
 env_map new_env_map();
 
 object create_err_obj(const char* format, ...);
+object create_null_obj();
 object create_lit_obj(literal l);
 
 void cleanup_environment(environment* env);
@@ -100,6 +102,7 @@ object_map new_object_map();
 void insert_obj_map(object_map map, object key, object val);
 object lookup_obj_map(object_map map, object key);
 int get_obj_hash(object key);
+char* object_map_string(object_map map);
 
 bool is_object_equal(object obj1, object obj2);
 

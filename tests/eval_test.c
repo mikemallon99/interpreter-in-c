@@ -87,40 +87,6 @@ object create_str_obj(char* str)
     return new_obj;
 }
 
-void assert_lit_equal(literal lit1, literal lit2)
-{
-    assert(lit1.type == lit2.type);
-    switch (lit1.type)
-    {
-        case INT_LIT:
-            assert(lit1.data.i == lit2.data.i);
-            break;
-        case BOOL_LIT:
-            assert(lit1.data.b == lit2.data.b);
-            break;
-        case STRING_LIT:
-            assert(strcmp(lit1.data.s, lit2.data.s) == 0);
-            break;
-        case NULL_LIT:
-            break;
-        default:
-            assert(false);
-    }
-}
-
-void assert_obj_equal(object obj1, object obj2)
-{
-    assert(obj1.type == obj2.type);
-    if (obj1.type == LIT_OBJ) {
-        assert_lit_equal(obj1.lit, obj2.lit);
-    }
-    else if (obj1.type == ARRAY_OBJ) {
-        for (int i = 0; i < obj1.arr.count; i++) {
-            assert_obj_equal(obj1.arr.objs[i], obj2.arr.objs[i]);
-        }
-    }
-}
-
 bool assert_prog_output(char* input_str, object exp_val)
 {
     lexer l = get_lexer(input_str);
@@ -136,7 +102,7 @@ bool assert_prog_output(char* input_str, object exp_val)
     printf("%s: %s\n", input_str, out_str);
     free(out_str);
 
-    assert_obj_equal(out, exp_val);
+    assert(is_object_equal(out, exp_val));
 
     cleanup_stmt_list(prog);
     force_cleanup_environment(&env);
@@ -374,6 +340,15 @@ bool test_eval_array()
 }
 
 
+bool test_eval_map()
+{
+    char input_str_1[] =
+        "let map = {0: \"zero\", 1: \"one\", 99: \"ninety nine\"};"
+        "map[99]";
+    assert_prog_output(input_str_1, create_str_obj("ninety nine"));
+}
+
+
 void run_all_eval_tests()
 {
     test_eval_int();
@@ -389,6 +364,7 @@ void run_all_eval_tests()
     test_eval_string();
     test_eval_builtin();
     test_eval_array();
+    test_eval_map();
 }
 
 #endif

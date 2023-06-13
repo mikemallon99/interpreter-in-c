@@ -16,11 +16,26 @@ typedef enum
     IDENT_LIT,
     FN_LIT,
     ARRAY_LIT,
+    MAP_LIT,
     NULL_LIT,
 } literal_type;
 
 typedef struct expr expr;
 typedef struct environment environment;
+
+typedef struct expr_pair
+{
+    expr* first;
+    expr* second;
+} expr_pair;
+
+typedef struct expr_pair_list
+{
+    expr_pair* expr_pairs;
+    size_t count;
+    size_t capacity;
+} expr_pair_list;
+
 
 typedef struct expr_list
 {
@@ -52,6 +67,7 @@ typedef union
     char* s;
     struct fn_lit fn;
     expr_list arr;
+    expr_pair_list map;
 } literal_data;
 
 typedef struct
@@ -116,6 +132,9 @@ void append_token_list(token_list* cur_list, token new_token);
 
 expr_list new_expr_list();
 void append_expr_list(expr_list* cur_list, expr* new_expr);
+
+expr_pair_list new_expr_pair_list();
+void append_expr_pair_list(expr_pair_list* cur_list, expr_pair new_expr_pair);
 
 char* token_list_string(token_list* tl);
 char* expr_list_string(expr_list* el);

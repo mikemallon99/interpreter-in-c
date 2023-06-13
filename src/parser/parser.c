@@ -9,6 +9,7 @@ bool _cur_token_is(parser* p, token_type cur_type);
 bool _peek_token_is(parser* p, token_type peek_type);
 precedence _peek_precedence(parser* p);
 bool _expect_peek(parser* p, token_type peek_type);
+expr* _parse_map(parser* p);
 expr* _parse_literal(parser* p);
 expr* _parse_prefix(parser* p);
 expr* _parse_infix(parser* p, expr* left);
@@ -434,12 +435,60 @@ expr* _parse_array(parser* p) {
         }
         else if (!_expect_peek(p, RBRACKET))
         {
+            // THIS SHOULD BE AN ERROR
             return ex;
         }
         else {
             return ex;
         }
     }
+}
+
+expr* _parse_map(parser* p) {
+    expr* ex = malloc(sizeof(expr));
+    ex->type = LITERAL_EXPR;
+    ex->data.lit.type = MAP_LIT;
+    ex->data.lit.data.map = new_expr_pair_list();
+
+    if (_peek_token_is(p, RBRACE))
+    {
+        _next_parser_token(p);
+        return ex;
+    }
+
+    while (true)
+    {
+        _next_parser_token(p);
+
+        expr_pair new_pair;
+        new_pair.first = _parse_expression(p, LOWEST_PR);
+
+        if (!_expect_peek(p, COLON))
+        {
+            return ex;
+        }
+
+        _next_parser_token(p);
+
+        new_pair.second = _parse_expression(p, LOWEST_PR);
+
+        append_expr_pair_list(&ex->data.lit.data.map, new_pair);
+
+        if (_peek_token_is(p, COMMA))
+        {
+            _next_parser_token(p);
+        }
+        else if (!_expect_peek(p, RBRACE))
+        {
+            // THIS SHOULD BE AN ERROR
+            return ex;
+        }
+        else {
+            return ex;
+        }
+    }
+
+    return ex;
 }
 
 expr* _parse_expression(parser* p, precedence prec)
@@ -471,6 +520,9 @@ expr* _parse_expression(parser* p, precedence prec)
             break;
         case LBRACKET:
             left_expr = _parse_array(p);
+            break;
+        case LBRACE:
+            left_expr = _parse_map(p);
             break;
         default:
             left_expr = NULL;

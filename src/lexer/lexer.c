@@ -100,6 +100,9 @@ token next_lexer_token(lexer* l)
     case ',':
         t = (token){COMMA, ","};
         break;
+    case ':':
+        t = (token){COLON, ":"};
+        break;
     case '{':
         t = (token){LBRACE, "{"};
         break;

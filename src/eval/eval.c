@@ -15,7 +15,12 @@ bool _is_function(object obj);
 bool _is_error(object obj);
 object _cast_as_bool(object l);
 
+bool _is_literal_equal(literal lit1, literal lit2);
+
 unsigned long _get_hash_env(char* str);
+unsigned long _get_hash_str(char* str, int size);
+int _mod(int a, int b);
+unsigned long _get_hash_int(int i, int size);
 void _insert_env(env_map map, char* key, object val);
 object _get_env(env_map map, char* key);
 object _eval_identifier(environment* env, char* key);
@@ -29,7 +34,9 @@ object _eval_infix(token op, object left, object right);
 object _eval_expr(expr* e, environment* env);
 object _eval_stmt(stmt* s, environment* env);
 object _eval_array(environment* env, expr_list ex_arr);
+object _eval_map(environment* env, expr_pair_list ex_pairs);
 object _index_array(object left, object right);
+object _index_map(object left, object right);
 
 void _cleanup_token(token tok);
 void _cleanup_token_list(token_list tok_lst);
@@ -52,6 +59,106 @@ environment* _copy_environment(environment* env);
 void _increment_env_refs(environment* env);
 
 // PUBLIC FUNCTIONS
+
+bool _is_literal_equal(literal lit1, literal lit2)
+{
+    if (lit1.type != lit2.type) {
+        return false;
+    }
+    switch (lit1.type)
+    {
+        case INT_LIT:
+            return lit1.data.i == lit2.data.i;
+        case BOOL_LIT:
+            return lit1.data.b == lit2.data.b;
+        case STRING_LIT:
+            return strcmp(lit1.data.s, lit2.data.s) == 0;
+        case NULL_LIT:
+            return true;
+        default:
+            assert(false);
+    }
+}
+
+bool is_object_equal(object obj1, object obj2)
+{
+    if (obj1.type != obj2.type) {
+        return false;
+    }
+    if (obj1.type == LIT_OBJ) {
+        return _is_literal_equal(obj1.lit, obj2.lit);
+    }
+    else if (obj1.type == ARRAY_OBJ) {
+        bool is_equal = true;
+        for (int i = 0; i < obj1.arr.count; i++) {
+            is_equal = is_equal && is_object_equal(obj1.arr.objs[i], obj2.arr.objs[i]);
+        }
+        return is_equal;
+    }
+}
+
+object_map new_object_map()
+{
+    object_map map;
+    map.entries = (object_map_entry* )calloc(OBJ_MAP_CAPACITY, sizeof(object_map_entry));
+    for (int i = 0; i < OBJ_MAP_CAPACITY; i++) {
+        map.entries[i].key.type = NULL_OBJ;
+    }
+    return map;
+}
+
+object lookup_obj_map(object_map map, object key)
+{
+    int hash_val = get_obj_hash(key);
+    if (hash_val < 0) {
+        return create_err_obj("Cannot create hash for input type.");
+    }
+    else {
+        if (is_object_equal(key, map.entries[hash_val].key)) {
+            return map.entries[hash_val].val;
+        }
+        else {
+            return create_err_obj("Key not found in map.");
+        }
+    }
+}
+
+void insert_obj_map(object_map map, object key, object val)
+{
+    int hash_val = get_obj_hash(key);
+    if (hash_val < 0) {
+        // return create_err_obj("Cannot create hash for input type.");
+        assert(false);
+        return;
+    }
+    else {
+        if (map.entries[hash_val].key.type == NULL_OBJ) {
+            map.entries[hash_val].key = key;
+            map.entries[hash_val].val = val;
+            return;
+        }
+        else {
+            assert(false);
+            return;
+        }
+    }
+}
+
+int get_obj_hash(object key)
+{
+    if (key.type == LIT_OBJ) {
+        switch (key.lit.type) {
+            case STRING_LIT:
+                return _get_hash_str(key.lit.data.s, OBJ_MAP_CAPACITY);
+            case INT_LIT:
+                return _get_hash_int(key.lit.data.i, OBJ_MAP_CAPACITY);
+            case BOOL_LIT:
+                return _get_hash_int(key.lit.data.b, OBJ_MAP_CAPACITY);
+            default:
+                return -1;
+        }
+    }
+}
 
 env_map new_env_map()
 {
@@ -379,8 +486,10 @@ object copy_object(object obj) {
     else if (obj.type == ARRAY_OBJ) {
         new_obj.arr = obj.arr;
     }
+    else {
+        new_obj.lit = _copy_literal(obj.lit);
+    }
 
-    new_obj.lit = _copy_literal(obj.lit);
     return new_obj;
 }
 
@@ -516,14 +625,30 @@ bool _is_function(object obj)
     return obj.lit.type == FN_LIT;
 }
 
+int _mod(int a, int b)
+{
+    int r = a % b;
+    return r < 0 ? r + b : r;
+}
+
 // Found a random string hash function
-unsigned long _get_hash_env(char* str)
+unsigned long _get_hash_int(int i, int size)
+{
+    return _mod(i, size);
+}
+
+unsigned long _get_hash_str(char* str, int size)
 {
     unsigned long hash = 5381;
     int c;
     while ((c =* str++))
         hash = ((hash << 5) + hash) + c; /* hash*  33 + c */
-    return hash % ENV_MAP_SIZE;
+    return hash % size;
+}
+
+unsigned long _get_hash_env(char* str)
+{
+    return _get_hash_str(str, ENV_MAP_SIZE);
 }
 
 void _insert_env(env_map env, char* key, object val)
@@ -756,6 +881,15 @@ object _index_array(object left, object right)
     return left.arr.objs[right.lit.data.i];
 }
 
+object _index_map(object left, object right) 
+{
+    if (left.type != MAP_OBJ) {
+        return create_err_obj("Tried to index object that isnt a map.");
+    }
+
+    return lookup_obj_map(left.map, right);
+}
+
 object _eval_infix(token op, object left, object right)
 {
     object out;
@@ -816,7 +950,15 @@ object _eval_infix(token op, object left, object right)
     case NOT_EQ:
         return _lit_neq(left, right);
     case LBRACKET:
-        return _index_array(left, right);
+        if (left.type == ARRAY_OBJ) {
+            return _index_array(left, right);
+        }
+        else if (left.type == MAP_OBJ) {
+            return _index_map(left, right);
+        }
+        else {
+            assert(false);
+        }
     default:
         return create_err_obj("operator not supported: %s", op.value);
     }
@@ -831,6 +973,17 @@ object _eval_array(environment* env, expr_list ex_arr)
         append_object_list(&out_arr.arr, _eval_expr(ex_arr.exprs[i], env));
     }
     return out_arr;
+}
+
+object _eval_map(environment* env, expr_pair_list ex_pairs)
+{
+    object out_map;
+    out_map.type = MAP_OBJ;
+    out_map.map = new_object_map();
+    for (int i = 0; i < ex_pairs.count; i++) {
+        insert_obj_map(out_map.map, _eval_expr(ex_pairs.expr_pairs[i].first, env), _eval_expr(ex_pairs.expr_pairs[i].second, env));
+    }
+    return out_map;
 }
 
 object _eval_expr(expr* e, environment* env)
@@ -850,6 +1003,9 @@ object _eval_expr(expr* e, environment* env)
         }
         else if (e->data.lit.type == ARRAY_LIT) {
             return _eval_array(env, e->data.lit.data.arr);
+        }
+        else if (e->data.lit.type == MAP_LIT) {
+            return _eval_map(env, e->data.lit.data.map);
         }
 
         out = create_lit_obj(e->data.lit);

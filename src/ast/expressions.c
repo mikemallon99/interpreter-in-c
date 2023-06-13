@@ -96,6 +96,26 @@ char* expr_list_string(expr_list* el)
     return el_str;
 }
 
+expr_pair_list new_expr_pair_list()
+{
+    expr_pair_list new_list;
+    new_list.capacity = 1;
+    new_list.expr_pairs = (expr_pair*)malloc(new_list.capacity * sizeof(expr_pair));
+    new_list.count = 0;
+    return new_list;
+}
+
+void append_expr_pair_list(expr_pair_list* cur_list, expr_pair new_expr_pair)
+{
+    if ((cur_list->count) >= cur_list->capacity)
+    {
+        cur_list->expr_pairs = (expr_pair*)realloc(cur_list->expr_pairs, cur_list->capacity * 2 * sizeof(expr_pair));
+        cur_list->capacity *= 2;
+    }
+    cur_list->expr_pairs[cur_list->count] = new_expr_pair;
+    cur_list->count++;
+}
+
 char* literal_string(literal lit)
 {
     char* lit_str = malloc(128);

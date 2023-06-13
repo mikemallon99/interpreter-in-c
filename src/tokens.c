@@ -140,6 +140,9 @@ char* get_token_type_string(token_type t)
     case DB_QUOTE:
         strcpy(token_string, "DB_QUOTE");
         break;
+    case COLON:
+        strcpy(token_string, "COLON");
+        break;
     }
 
     return token_string;

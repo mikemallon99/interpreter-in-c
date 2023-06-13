@@ -26,6 +26,7 @@ typedef enum
 
     // Delimiters
     COMMA,
+    COLON,
     SEMICOLON,
     DB_QUOTE,
 

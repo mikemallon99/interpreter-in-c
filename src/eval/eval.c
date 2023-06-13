@@ -57,6 +57,9 @@ env_map new_env_map()
 {
     env_map env;
     env.entries = (env_map_entry* )calloc(ENV_MAP_SIZE, sizeof(env_map_entry));
+    for (int i = 0; i < ENV_MAP_SIZE; i++) {
+        env.entries[i].key = NULL;
+    }
     env.ref_count = 1;
     return env;
 }
@@ -64,6 +67,7 @@ env_map new_env_map()
 object eval_program(stmt_list* p, environment* env)
 {
     object out;
+    out.type = NULL_OBJ;
 
     for (int i = 0; i < p->count; i++)
     {
@@ -416,6 +420,8 @@ environment* _copy_environment(environment* env) {
 }
 
 void cleanup_environment(environment* env) {
+    // TODO: fix garbage collector issues
+    return;
     env->inner.ref_count -= 1;
     if (env->inner.ref_count <= 0) {
         if (env->inner.entries == NULL) {
@@ -440,6 +446,10 @@ void cleanup_environment(environment* env) {
 }
 
 void force_cleanup_environment(environment* env) {
+    if (env->inner.entries == NULL) {
+        return;
+    }
+
     for (int i = 0; i < ENV_MAP_SIZE; i++) {
         if (env->inner.entries[i].key == NULL) {
             continue;
@@ -448,6 +458,7 @@ void force_cleanup_environment(environment* env) {
         cleanup_object(env->inner.entries[i].value);
     }
     free(env->inner.entries);
+    env->inner.entries = NULL;
 }
 
 void _increment_env_refs(environment* env) {

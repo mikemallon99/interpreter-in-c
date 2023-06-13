@@ -356,6 +356,13 @@ bool test_eval_array()
     int arr_5[] = {2, 4, 6, 8};
     assert_prog_output(input_str_11, create_array_obj(arr_5, 4));
 
+    char input_str_12[] = 
+        "let reduce = fn(arr, initial, f) { let iter = fn(arr, result) { if (len(arr) == 0) { result } else { iter(rest(arr), f(result, first(arr))); } }; iter(arr, initial); };"
+        "let sum = fn(arr) { reduce(arr, 0, fn(initial, el) { initial + el }); };"
+        "let a = [1, 2, 3, 4, 5];"
+        "sum(a);";
+    assert_prog_output(input_str_12, create_int_obj(15));
+
     // THIS BREAKS THE PARSER
     // char input_str_11[] = 
     //     "let map = fn(arr, f) { let iter = fn(arr, accumulated) { if (len(arr) == 0) { accumulated } else { iter(rest(arr), push(accumulated, f(first(arr)))); }  iter(arr, []); };"

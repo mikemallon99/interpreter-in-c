@@ -10,7 +10,8 @@ typedef enum
     ARRAY_OBJ,
     BUILTIN_OBJ,
     RET_OBJ,
-    ERR_OBJ
+    ERR_OBJ,
+    NULL_OBJ
 } object_type;
 
 typedef struct object object;

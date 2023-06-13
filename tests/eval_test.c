@@ -33,6 +33,7 @@ object create_int_obj(int i)
     object new_obj;
     new_obj.type = LIT_OBJ;
     new_obj.lit = lit;
+    new_obj.is_return = false;
 
     return new_obj;
 }
@@ -140,7 +141,7 @@ bool test_eval_return()
         "    return 1;"
         "}";
     object obj = create_int_obj(10);
-    obj.type = RET_OBJ;
+    obj.is_return = false;
     assert_prog_output(input_str, obj);
 }
 
@@ -175,6 +176,14 @@ bool test_eval_error()
     assert(out.type == ERR_OBJ);
     assert(strcmp("operator not supported: /", out.err) == 0);
     printf("%s: %s", input_str_5, out.err);
+
+    char input_str_6[] = 
+        "let test = fn(x) { return x * 2 };"
+        "test(3, 4);";
+    out = get_prog_output(input_str_6);
+    assert(out.type == ERR_OBJ);
+    printf("%s: %s", input_str_6, out.err);
+    assert(strcmp("arg mismatch, input: 2 fn: 1", out.err) == 0);
 }
 
 bool test_eval_fn()
@@ -214,7 +223,6 @@ bool test_eval_fn_rec()
         "let factorial = fn(x){ if (x == 0) {return 1;} else {return x * factorial(x - 1);}; };"
         "factorial(3);";
     object obj = create_int_obj(6);
-    obj.type = RET_OBJ;
     assert_prog_output(input_str, obj);
 }
 

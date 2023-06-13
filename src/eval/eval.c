@@ -177,7 +177,7 @@ object eval_program(stmt_list* p, environment* env)
     for (int i = 0; i < p->count; i++)
     {
         out = _eval_stmt(&p->statements[i], env);
-        if (out.type == RET_OBJ || out.type == ERR_OBJ)
+        if (out.is_return || out.type == ERR_OBJ)
         {
             break;
         }
@@ -619,6 +619,7 @@ object create_null_obj()
     object null;
     null.type = LIT_OBJ;
     null.lit.type = NULL_LIT;
+    null.is_return = false;
     return null;
 }
 
@@ -627,6 +628,7 @@ object create_lit_obj(literal l)
     object obj;
     obj.type = LIT_OBJ;
     obj.lit = _copy_literal(l);
+    obj.is_return = false;
     return obj;
 }
 
@@ -635,12 +637,14 @@ object create_builtin_obj(builtin_name name)
     object obj;
     obj.type = BUILTIN_OBJ;
     obj.builtin_fn = name;
+    obj.is_return = false;
     return obj;
 }
 
 object create_err_obj(const char* format, ...)
 {
     object obj;
+    obj.is_return = false;
     obj.type = ERR_OBJ;
 
     char* buffer = (char*)malloc(256);
@@ -740,8 +744,7 @@ object _lookup_builtins(char* key)
 
 object _get_literal_env(environment* env, char* key) 
 {
-    object val;
-    val = _get_env(env->inner, key);
+    object val = _get_env(env->inner, key);
     if (val.type == ERR_OBJ && env->outer != NULL)
     {
         cleanup_object(val);
@@ -932,7 +935,7 @@ object _index_map(object left, object right)
 
 object _eval_infix(token op, object left, object right)
 {
-    object out;
+    object out = create_null_obj();
     out.type = LIT_OBJ;
 
     if (left.lit.type == INT_LIT && left.lit.type != right.lit.type)
@@ -1006,29 +1009,46 @@ object _eval_infix(token op, object left, object right)
 
 object _eval_array(environment* env, expr_list ex_arr)
 {
-    object out_arr;
+    object out_arr = create_null_obj();
     out_arr.type = ARRAY_OBJ;
     out_arr.arr = new_object_list();
+
+    object cur_obj = create_null_obj();
     for (int i = 0; i < ex_arr.count; i++) {
-        append_object_list(&out_arr.arr, _eval_expr(ex_arr.exprs[i], env));
+        cur_obj = _eval_expr(ex_arr.exprs[i], env);
+        if (_is_error(cur_obj)) {
+            return cur_obj;
+        }
+        append_object_list(&out_arr.arr, cur_obj);
     }
     return out_arr;
 }
 
 object _eval_map(environment* env, expr_pair_list ex_pairs)
 {
-    object out_map;
+    object out_map = create_null_obj();
     out_map.type = MAP_OBJ;
     out_map.map = new_object_map();
+
+    object key_obj = create_null_obj();
+    object val_obj = create_null_obj();
     for (int i = 0; i < ex_pairs.count; i++) {
-        insert_obj_map(out_map.map, _eval_expr(ex_pairs.expr_pairs[i].first, env), _eval_expr(ex_pairs.expr_pairs[i].second, env));
+        key_obj = _eval_expr(ex_pairs.expr_pairs[i].first, env);
+        if (_is_error(key_obj)) {
+            return key_obj;
+        }
+        val_obj = _eval_expr(ex_pairs.expr_pairs[i].second, env);
+        if (_is_error(val_obj)) {
+            return val_obj;
+        }
+        insert_obj_map(out_map.map, key_obj, val_obj);
     }
     return out_map;
 }
 
 object _eval_expr(expr* e, environment* env)
 {
-    object out;
+    object out = create_null_obj();
     object left, right;
     object func;
     expr_list args;
@@ -1039,7 +1059,14 @@ object _eval_expr(expr* e, environment* env)
         // Resolve any identifier
         if (e->data.lit.type == IDENT_LIT)
         {
-            return copy_object(_eval_identifier(env, e->data.lit.data.t.value));
+            out = _eval_identifier(env, e->data.lit.data.t.value);
+            if (_is_error(out)) {
+                return out;
+            }
+            else {
+                // Need to make a copy cause of how garbage collection works
+                return copy_object(out);
+            }
         }
         else if (e->data.lit.type == ARRAY_LIT) {
             return _eval_array(env, e->data.lit.data.arr);
@@ -1047,15 +1074,16 @@ object _eval_expr(expr* e, environment* env)
         else if (e->data.lit.type == MAP_LIT) {
             return _eval_map(env, e->data.lit.data.map);
         }
-
-        out = create_lit_obj(e->data.lit);
-        if (e->data.lit.type == FN_LIT)
-        {
+        else if (e->data.lit.type == FN_LIT) {
+            out = create_lit_obj(e->data.lit);
             out.lit.data.fn.env = (environment*)calloc(1, sizeof(environment));
             out.lit.data.fn.env->outer = env;
             _increment_env_refs(out.lit.data.fn.env->outer);
+            return out;
         }
-        return out;
+        else {
+            return create_lit_obj(e->data.lit);
+        }
     case PREFIX_EXPR:
         out = _eval_expr(e->data.pre.right, env);
         if (_is_error(out))
@@ -1107,12 +1135,13 @@ object _eval_expr(expr* e, environment* env)
         }
 
         args = e->data.call.args;
-        if (args.count != func.lit.data.fn.params.count)
-        {
-            create_err_obj("arg mismatch, input: %d fn: %d", args.count, func.lit.data.fn.params.count);
-        }
 
         if (func.type == LIT_OBJ) {
+            if (args.count != func.lit.data.fn.params.count)
+            {
+                return create_err_obj("arg mismatch, input: %d fn: %d", args.count, func.lit.data.fn.params.count);
+            }
+
             func.lit.data.fn.env->inner = new_env_map();
             for (int i = 0; i < args.count; i++)
             {
@@ -1149,7 +1178,7 @@ object _eval_expr(expr* e, environment* env)
 
 object _eval_stmt(stmt* s, environment* env)
 {
-    object out;
+    object out = create_null_obj();
 
     switch (s->type)
     {
@@ -1160,7 +1189,7 @@ object _eval_stmt(stmt* s, environment* env)
         {
             return out;
         }
-        out.type = RET_OBJ;
+        out.is_return = true;
         return out;
     case EXPR_STMT:
         out = _eval_expr(s->data.expr.value, env);

@@ -28,7 +28,7 @@ let int_map = {"one": 1, "two": 2, "three": 3, "four": 4};
 print(int_map);
 
 let get_int = fn(in_str, in_map) {
-    in_map[in_str];
+    return in_map[in_str];
 };
 
 let int_list = map(input, fn(x) {get_int(x, int_map)});

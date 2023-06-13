@@ -12,7 +12,6 @@ typedef enum
     ARRAY_OBJ,
     MAP_OBJ,
     BUILTIN_OBJ,
-    RET_OBJ,
     ERR_OBJ,
     NULL_OBJ
 } object_type;
@@ -46,6 +45,7 @@ typedef enum
 typedef struct object
 {
     object_type type;
+    bool is_return;
     literal lit;
     char* err;
     builtin_name builtin_fn;
